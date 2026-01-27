@@ -1,0 +1,495 @@
+<?php
+
+namespace Core\Commerce\Controllers\Webhooks;
+
+use Carbon\Carbon;
+use Core\Front\Controller;
+use Core\Mod\Tenant\Models\Workspace;
+use Core\Mod\Tenant\Services\EntitlementService;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Core\Commerce\Models\Order;
+use Core\Commerce\Models\Payment;
+use Core\Commerce\Models\PaymentMethod;
+use Core\Commerce\Models\Subscription;
+use Core\Commerce\Notifications\OrderConfirmation;
+use Core\Commerce\Notifications\PaymentFailed;
+use Core\Commerce\Notifications\SubscriptionCancelled;
+use Core\Commerce\Services\CommerceService;
+use Core\Commerce\Services\InvoiceService;
+use Core\Commerce\Services\PaymentGateway\StripeGateway;
+use Core\Commerce\Services\WebhookLogger;
+
+/**
+ * Handle Stripe webhooks.
+ *
+ * Key events:
+ * - checkout.session.completed: One-time payment or subscription started
+ * - invoice.paid: Subscription renewal successful
+ * - invoice.payment_failed: Payment failed
+ * - customer.subscription.updated: Plan change, pause, etc.
+ * - customer.subscription.deleted: Subscription cancelled
+ * - payment_method.attached/detached: Card updates
+ */
+class StripeWebhookController extends Controller
+{
+    public function __construct(
+        protected StripeGateway $gateway,
+        protected CommerceService $commerce,
+        protected InvoiceService $invoiceService,
+        protected EntitlementService $entitlements,
+        protected WebhookLogger $webhookLogger,
+    ) {}
+
+    public function handle(Request $request): Response
+    {
+        $payload = $request->getContent();
+        $signature = $request->header('Stripe-Signature');
+
+        // Verify webhook signature
+        if (! $this->gateway->verifyWebhookSignature($payload, $signature)) {
+            Log::warning('Stripe webhook signature verification failed');
+
+            return response('Invalid signature', 401);
+        }
+
+        $event = $this->gateway->parseWebhookEvent($payload);
+
+        // Log the webhook event for audit trail
+        $this->webhookLogger->startFromParsedEvent('stripe', $event, $payload, $request);
+
+        Log::info('Stripe webhook received', [
+            'type' => $event['type'],
+            'id' => $event['id'],
+        ]);
+
+        try {
+            // Wrap all webhook processing in a transaction to ensure data integrity
+            $response = DB::transaction(function () use ($event) {
+                return match ($event['type']) {
+                    'checkout.session.completed' => $this->handleCheckoutCompleted($event),
+                    'invoice.paid' => $this->handleInvoicePaid($event),
+                    'invoice.payment_failed' => $this->handleInvoicePaymentFailed($event),
+                    'customer.subscription.created' => $this->handleSubscriptionCreated($event),
+                    'customer.subscription.updated' => $this->handleSubscriptionUpdated($event),
+                    'customer.subscription.deleted' => $this->handleSubscriptionDeleted($event),
+                    'payment_method.attached' => $this->handlePaymentMethodAttached($event),
+                    'payment_method.detached' => $this->handlePaymentMethodDetached($event),
+                    'payment_method.updated' => $this->handlePaymentMethodUpdated($event),
+                    'setup_intent.succeeded' => $this->handleSetupIntentSucceeded($event),
+                    default => $this->handleUnknownEvent($event),
+                };
+            });
+
+            $this->webhookLogger->success($response);
+
+            return $response;
+        } catch (\Exception $e) {
+            Log::error('Stripe webhook processing error', [
+                'type' => $event['type'],
+                'error' => $e->getMessage(),
+            ]);
+
+            $this->webhookLogger->fail($e->getMessage(), 500);
+
+            return response('Processing error', 500);
+        }
+    }
+
+    protected function handleUnknownEvent(array $event): Response
+    {
+        $this->webhookLogger->skip('Unhandled event type: '.$event['type']);
+
+        return response('Unhandled event type', 200);
+    }
+
+    protected function handleCheckoutCompleted(array $event): Response
+    {
+        $session = $event['raw']['data']['object'];
+        $orderId = $session['metadata']['order_id'] ?? null;
+
+        if (! $orderId) {
+            Log::warning('Stripe checkout.session.completed: No order_id in metadata');
+
+            return response('No order_id', 200);
+        }
+
+        $order = Order::find($orderId);
+
+        if (! $order) {
+            Log::warning('Stripe checkout: Order not found', ['order_id' => $orderId]);
+
+            return response('Order not found', 200);
+        }
+
+        // Link webhook event to order for audit trail
+        $this->webhookLogger->linkOrder($order);
+
+        // Skip if already paid
+        if ($order->isPaid()) {
+            return response('Already processed', 200);
+        }
+
+        // Create payment record
+        $payment = Payment::create([
+            'workspace_id' => $order->workspace_id,
+            'order_id' => $order->id,
+            'gateway' => 'stripe',
+            'gateway_payment_id' => $session['payment_intent'] ?? $session['id'],
+            'amount' => ($session['amount_total'] ?? 0) / 100,
+            'currency' => strtoupper($session['currency'] ?? 'GBP'),
+            'status' => 'succeeded',
+            'paid_at' => now(),
+            'gateway_response' => $session,
+        ]);
+
+        // Handle subscription if present
+        if (! empty($session['subscription'])) {
+            $this->createOrUpdateSubscriptionFromSession($order, $session);
+        }
+
+        // Fulfil the order
+        $this->commerce->fulfillOrder($order, $payment);
+
+        // Send confirmation
+        $this->sendOrderConfirmation($order);
+
+        Log::info('Stripe order fulfilled', [
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+        ]);
+
+        return response('OK', 200);
+    }
+
+    protected function handleInvoicePaid(array $event): Response
+    {
+        $invoice = $event['raw']['data']['object'];
+        $subscriptionId = $invoice['subscription'] ?? null;
+
+        if (! $subscriptionId) {
+            // One-time invoice, not subscription
+            return response('OK', 200);
+        }
+
+        $subscription = Subscription::where('gateway', 'stripe')
+            ->where('gateway_subscription_id', $subscriptionId)
+            ->first();
+
+        if (! $subscription) {
+            Log::warning('Stripe invoice.paid: Subscription not found', ['subscription_id' => $subscriptionId]);
+
+            return response('Subscription not found', 200);
+        }
+
+        // Link webhook event to subscription for audit trail
+        $this->webhookLogger->linkSubscription($subscription);
+
+        // Update subscription period
+        $subscription->renew(
+            Carbon::createFromTimestamp($invoice['period_start']),
+            Carbon::createFromTimestamp($invoice['period_end'])
+        );
+
+        // Create payment record
+        $payment = Payment::create([
+            'workspace_id' => $subscription->workspace_id,
+            'gateway' => 'stripe',
+            'gateway_payment_id' => $invoice['payment_intent'] ?? $invoice['id'],
+            'amount' => ($invoice['amount_paid'] ?? 0) / 100,
+            'currency' => strtoupper($invoice['currency'] ?? 'GBP'),
+            'status' => 'succeeded',
+            'paid_at' => now(),
+            'gateway_response' => $invoice,
+        ]);
+
+        // Create local invoice
+        $this->invoiceService->createForRenewal(
+            $subscription->workspace,
+            $payment->amount,
+            'Subscription renewal',
+            $payment
+        );
+
+        Log::info('Stripe subscription renewed', [
+            'subscription_id' => $subscription->id,
+            'payment_id' => $payment->id,
+        ]);
+
+        return response('OK', 200);
+    }
+
+    protected function handleInvoicePaymentFailed(array $event): Response
+    {
+        $invoice = $event['raw']['data']['object'];
+        $subscriptionId = $invoice['subscription'] ?? null;
+
+        if (! $subscriptionId) {
+            return response('OK', 200);
+        }
+
+        $subscription = Subscription::where('gateway', 'stripe')
+            ->where('gateway_subscription_id', $subscriptionId)
+            ->first();
+
+        if ($subscription) {
+            $subscription->markPastDue();
+
+            // Send notification
+            $owner = $subscription->workspace->owner();
+            if ($owner && config('commerce.notifications.payment_failed', true)) {
+                $owner->notify(new PaymentFailed($subscription));
+            }
+        }
+
+        return response('OK', 200);
+    }
+
+    protected function handleSubscriptionCreated(array $event): Response
+    {
+        // Usually handled by checkout.session.completed
+        // This is a fallback for direct API subscription creation
+        return response('OK', 200);
+    }
+
+    protected function handleSubscriptionUpdated(array $event): Response
+    {
+        $stripeSubscription = $event['raw']['data']['object'];
+
+        $subscription = Subscription::where('gateway', 'stripe')
+            ->where('gateway_subscription_id', $stripeSubscription['id'])
+            ->first();
+
+        if (! $subscription) {
+            return response('Subscription not found', 200);
+        }
+
+        $subscription->update([
+            'status' => $this->mapStripeStatus($stripeSubscription['status']),
+            'cancel_at_period_end' => $stripeSubscription['cancel_at_period_end'] ?? false,
+            'current_period_start' => Carbon::createFromTimestamp($stripeSubscription['current_period_start']),
+            'current_period_end' => Carbon::createFromTimestamp($stripeSubscription['current_period_end']),
+        ]);
+
+        return response('OK', 200);
+    }
+
+    protected function handleSubscriptionDeleted(array $event): Response
+    {
+        $stripeSubscription = $event['raw']['data']['object'];
+
+        $subscription = Subscription::where('gateway', 'stripe')
+            ->where('gateway_subscription_id', $stripeSubscription['id'])
+            ->first();
+
+        if ($subscription) {
+            $subscription->update([
+                'status' => 'cancelled',
+                'ended_at' => now(),
+            ]);
+
+            // Revoke entitlements
+            $workspacePackage = $subscription->workspacePackage;
+            if ($workspacePackage) {
+                $this->entitlements->revokePackage(
+                    $subscription->workspace,
+                    $workspacePackage->package->code
+                );
+            }
+
+            // Send notification
+            $owner = $subscription->workspace->owner();
+            if ($owner && config('commerce.notifications.subscription_cancelled', true)) {
+                $owner->notify(new SubscriptionCancelled($subscription));
+            }
+        }
+
+        return response('OK', 200);
+    }
+
+    protected function handlePaymentMethodAttached(array $event): Response
+    {
+        $stripePaymentMethod = $event['raw']['data']['object'];
+        $customerId = $stripePaymentMethod['customer'] ?? null;
+
+        if (! $customerId) {
+            return response('OK', 200);
+        }
+
+        $workspace = Workspace::where('stripe_customer_id', $customerId)->first();
+
+        if (! $workspace) {
+            return response('Workspace not found', 200);
+        }
+
+        // Check if payment method already exists
+        $exists = PaymentMethod::where('gateway', 'stripe')
+            ->where('gateway_payment_method_id', $stripePaymentMethod['id'])
+            ->exists();
+
+        if (! $exists) {
+            PaymentMethod::create([
+                'workspace_id' => $workspace->id,
+                'gateway' => 'stripe',
+                'gateway_payment_method_id' => $stripePaymentMethod['id'],
+                'type' => $stripePaymentMethod['type'] ?? 'card',
+                'last_four' => $stripePaymentMethod['card']['last4'] ?? null,
+                'brand' => $stripePaymentMethod['card']['brand'] ?? null,
+                'exp_month' => $stripePaymentMethod['card']['exp_month'] ?? null,
+                'exp_year' => $stripePaymentMethod['card']['exp_year'] ?? null,
+                'is_default' => false,
+            ]);
+        }
+
+        return response('OK', 200);
+    }
+
+    protected function handlePaymentMethodDetached(array $event): Response
+    {
+        $stripePaymentMethod = $event['raw']['data']['object'];
+
+        // Soft-delete by marking as inactive (don't hard delete for audit trail)
+        PaymentMethod::where('gateway', 'stripe')
+            ->where('gateway_payment_method_id', $stripePaymentMethod['id'])
+            ->update(['is_active' => false]);
+
+        return response('OK', 200);
+    }
+
+    /**
+     * Handle payment method updates (e.g., card expiry update from card networks).
+     */
+    protected function handlePaymentMethodUpdated(array $event): Response
+    {
+        $stripePaymentMethod = $event['raw']['data']['object'];
+
+        $paymentMethod = PaymentMethod::where('gateway', 'stripe')
+            ->where('gateway_payment_method_id', $stripePaymentMethod['id'])
+            ->first();
+
+        if ($paymentMethod) {
+            $card = $stripePaymentMethod['card'] ?? [];
+            $paymentMethod->update([
+                'brand' => $card['brand'] ?? $paymentMethod->brand,
+                'last_four' => $card['last4'] ?? $paymentMethod->last_four,
+                'exp_month' => $card['exp_month'] ?? $paymentMethod->exp_month,
+                'exp_year' => $card['exp_year'] ?? $paymentMethod->exp_year,
+            ]);
+        }
+
+        return response('OK', 200);
+    }
+
+    /**
+     * Handle setup intent success (new payment method added via hosted setup page).
+     */
+    protected function handleSetupIntentSucceeded(array $event): Response
+    {
+        $setupIntent = $event['raw']['data']['object'];
+        $customerId = $setupIntent['customer'] ?? null;
+        $paymentMethodId = $setupIntent['payment_method'] ?? null;
+
+        if (! $customerId || ! $paymentMethodId) {
+            return response('OK', 200);
+        }
+
+        $workspace = Workspace::where('stripe_customer_id', $customerId)->first();
+
+        if (! $workspace) {
+            Log::warning('Stripe setup_intent.succeeded: Workspace not found', ['customer_id' => $customerId]);
+
+            return response('Workspace not found', 200);
+        }
+
+        // The payment_method.attached webhook should handle creating the record
+        // But we can also ensure it exists here as a fallback
+        $exists = PaymentMethod::where('gateway', 'stripe')
+            ->where('gateway_payment_method_id', $paymentMethodId)
+            ->exists();
+
+        if (! $exists) {
+            // Fetch payment method details from Stripe
+            try {
+                $this->gateway->attachPaymentMethod($workspace, $paymentMethodId);
+
+                Log::info('Payment method created from setup_intent', [
+                    'workspace_id' => $workspace->id,
+                    'payment_method_id' => $paymentMethodId,
+                ]);
+            } catch (\Exception $e) {
+                Log::warning('Failed to attach payment method from setup_intent', [
+                    'workspace_id' => $workspace->id,
+                    'payment_method_id' => $paymentMethodId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return response('OK', 200);
+    }
+
+    protected function createOrUpdateSubscriptionFromSession(Order $order, array $session): void
+    {
+        $stripeSubscriptionId = $session['subscription'];
+
+        // Check if subscription already exists
+        $subscription = Subscription::where('gateway_subscription_id', $stripeSubscriptionId)->first();
+
+        if ($subscription) {
+            return;
+        }
+
+        // Get subscription details from Stripe
+        $stripeSubscription = $this->gateway->getInvoice($stripeSubscriptionId);
+
+        // Find workspace package from order items
+        $packageItem = $order->items->firstWhere('type', 'package');
+        $workspace = $order->getResolvedWorkspace();
+        $workspacePackage = ($packageItem?->package && $workspace)
+            ? $workspace->workspacePackages()
+                ->where('package_id', $packageItem->package_id)
+                ->first()
+            : null;
+
+        Subscription::create([
+            'workspace_id' => $order->workspace_id,
+            'workspace_package_id' => $workspacePackage?->id,
+            'gateway' => 'stripe',
+            'gateway_subscription_id' => $stripeSubscriptionId,
+            'gateway_customer_id' => $session['customer'],
+            'gateway_price_id' => $stripeSubscription['items']['data'][0]['price']['id'] ?? null,
+            'status' => $this->mapStripeStatus($stripeSubscription['status'] ?? 'active'),
+            'current_period_start' => Carbon::createFromTimestamp($stripeSubscription['current_period_start'] ?? time()),
+            'current_period_end' => Carbon::createFromTimestamp($stripeSubscription['current_period_end'] ?? time() + 2592000),
+        ]);
+    }
+
+    protected function mapStripeStatus(string $status): string
+    {
+        return match ($status) {
+            'active' => 'active',
+            'trialing' => 'trialing',
+            'past_due' => 'past_due',
+            'paused' => 'paused',
+            'canceled', 'cancelled' => 'cancelled',
+            'incomplete', 'incomplete_expired' => 'incomplete',
+            default => 'active',
+        };
+    }
+
+    protected function sendOrderConfirmation(Order $order): void
+    {
+        if (! config('commerce.notifications.order_confirmation', true)) {
+            return;
+        }
+
+        // Use resolved workspace to handle both Workspace and User orderables
+        $workspace = $order->getResolvedWorkspace();
+        $owner = $workspace?->owner();
+        if ($owner) {
+            $owner->notify(new OrderConfirmation($order));
+        }
+    }
+}
