@@ -2,10 +2,10 @@
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
-use Core\Commerce\Exceptions\PauseLimitExceededException;
-use Core\Commerce\Models\Subscription;
-use Core\Commerce\Services\ProrationResult;
-use Core\Commerce\Services\SubscriptionService;
+use Core\Mod\Commerce\Exceptions\PauseLimitExceededException;
+use Core\Mod\Commerce\Models\Subscription;
+use Core\Mod\Commerce\Services\ProrationResult;
+use Core\Mod\Commerce\Services\SubscriptionService;
 use Core\Mod\Tenant\Models\Feature;
 use Core\Mod\Tenant\Models\Package;
 use Core\Mod\Tenant\Models\User;

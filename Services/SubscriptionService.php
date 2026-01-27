@@ -1,12 +1,12 @@
 <?php
 
-namespace Core\Commerce\Services;
+namespace Core\Mod\Commerce\Services;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Core\Commerce\Exceptions\PauseLimitExceededException;
-use Core\Commerce\Models\Subscription;
+use Core\Mod\Commerce\Exceptions\PauseLimitExceededException;
+use Core\Mod\Commerce\Models\Subscription;
 use Core\Mod\Tenant\Models\Package;
 use Core\Mod\Tenant\Models\Workspace;
 use Core\Mod\Tenant\Models\WorkspacePackage;

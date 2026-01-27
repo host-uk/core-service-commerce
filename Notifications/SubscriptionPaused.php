@@ -1,12 +1,12 @@
 <?php
 
-namespace Core\Commerce\Notifications;
+namespace Core\Mod\Commerce\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use Core\Commerce\Models\Subscription;
+use Core\Mod\Commerce\Models\Subscription;
 
 class SubscriptionPaused extends Notification implements ShouldQueue
 {

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\Jobs;
+namespace Core\Mod\Commerce\Jobs;
 
-use Core\Commerce\Events\SubscriptionRenewed;
-use Core\Commerce\Models\Subscription;
+use Core\Mod\Commerce\Events\SubscriptionRenewed;
+use Core\Mod\Commerce\Models\Subscription;
 use Core\Mod\Tenant\Models\EntitlementLog;
 use Core\Mod\Tenant\Models\WorkspacePackage;
 use Core\Mod\Tenant\Services\EntitlementService;

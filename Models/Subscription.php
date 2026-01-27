@@ -1,6 +1,6 @@
 <?php
 
-namespace Core\Commerce\Models;
+namespace Core\Mod\Commerce\Models;
 
 use Core\Mod\Tenant\Models\Workspace;
 use Core\Mod\Tenant\Models\WorkspacePackage;
@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Core\Commerce\Events\SubscriptionCreated;
-use Core\Commerce\Events\SubscriptionUpdated;
+use Core\Mod\Commerce\Events\SubscriptionCreated;
+use Core\Mod\Commerce\Events\SubscriptionUpdated;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -39,9 +39,9 @@ class Subscription extends Model
     use HasFactory;
     use LogsActivity;
 
-    protected static function newFactory(): \Core\Commerce\Database\Factories\SubscriptionFactory
+    protected static function newFactory(): \Core\Mod\Commerce\Database\Factories\SubscriptionFactory
     {
-        return \Core\Commerce\Database\Factories\SubscriptionFactory::new();
+        return \Core\Mod\Commerce\Database\Factories\SubscriptionFactory::new();
     }
 
     /**

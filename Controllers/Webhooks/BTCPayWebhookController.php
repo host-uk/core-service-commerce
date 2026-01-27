@@ -1,18 +1,18 @@
 <?php
 
-namespace Core\Commerce\Controllers\Webhooks;
+namespace Core\Mod\Commerce\Controllers\Webhooks;
 
 use Core\Front\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Core\Commerce\Models\Order;
-use Core\Commerce\Models\Payment;
-use Core\Commerce\Notifications\OrderConfirmation;
-use Core\Commerce\Services\CommerceService;
-use Core\Commerce\Services\PaymentGateway\BTCPayGateway;
-use Core\Commerce\Services\WebhookLogger;
+use Core\Mod\Commerce\Models\Order;
+use Core\Mod\Commerce\Models\Payment;
+use Core\Mod\Commerce\Notifications\OrderConfirmation;
+use Core\Mod\Commerce\Services\CommerceService;
+use Core\Mod\Commerce\Services\PaymentGateway\BTCPayGateway;
+use Core\Mod\Commerce\Services\WebhookLogger;
 
 /**
  * Handle BTCPay Server webhooks.

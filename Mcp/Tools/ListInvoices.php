@@ -1,8 +1,8 @@
 <?php
 
-namespace Core\Commerce\Mcp\Tools;
+namespace Core\Mod\Commerce\Mcp\Tools;
 
-use Core\Commerce\Models\Invoice;
+use Core\Mod\Commerce\Models\Invoice;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;

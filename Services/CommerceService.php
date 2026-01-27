@@ -1,20 +1,20 @@
 <?php
 
-namespace Core\Commerce\Services;
+namespace Core\Mod\Commerce\Services;
 
 use Core\Mod\Tenant\Models\Package;
 use Core\Mod\Tenant\Models\Workspace;
 use Core\Mod\Tenant\Services\EntitlementService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-use Core\Commerce\Contracts\Orderable;
-use Core\Commerce\Models\Coupon;
-use Core\Commerce\Models\Invoice;
-use Core\Commerce\Models\Order;
-use Core\Commerce\Models\OrderItem;
-use Core\Commerce\Models\Payment;
-use Core\Commerce\Models\Subscription;
-use Core\Commerce\Services\PaymentGateway\PaymentGatewayContract;
+use Core\Mod\Commerce\Contracts\Orderable;
+use Core\Mod\Commerce\Models\Coupon;
+use Core\Mod\Commerce\Models\Invoice;
+use Core\Mod\Commerce\Models\Order;
+use Core\Mod\Commerce\Models\OrderItem;
+use Core\Mod\Commerce\Models\Payment;
+use Core\Mod\Commerce\Models\Subscription;
+use Core\Mod\Commerce\Services\PaymentGateway\PaymentGatewayContract;
 
 /**
  * Main commerce orchestration service.
@@ -342,7 +342,7 @@ class CommerceService
             }
 
             // Dispatch OrderPaid event for referral tracking and other listeners
-            event(new \Core\Commerce\Events\OrderPaid($order, $payment));
+            event(new \Core\Mod\Commerce\Events\OrderPaid($order, $payment));
         });
     }
 
@@ -491,7 +491,7 @@ class CommerceService
         Payment $payment,
         ?float $amount = null,
         ?string $reason = null
-    ): \Core\Commerce\Models\Refund {
+    ): \Core\Mod\Commerce\Models\Refund {
         $amountCents = $amount
             ? (int) ($amount * 100)
             : (int) (($payment->amount - $payment->amount_refunded) * 100);

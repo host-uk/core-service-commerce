@@ -1,9 +1,9 @@
 <?php
 
-use Core\Commerce\Models\Coupon;
-use Core\Commerce\Models\CouponUsage;
-use Core\Commerce\Models\Order;
-use Core\Commerce\Services\CouponService;
+use Core\Mod\Commerce\Models\Coupon;
+use Core\Mod\Commerce\Models\CouponUsage;
+use Core\Mod\Commerce\Models\Order;
+use Core\Mod\Commerce\Services\CouponService;
 use Core\Mod\Tenant\Models\Package;
 use Core\Mod\Tenant\Models\User;
 use Core\Mod\Tenant\Models\Workspace;

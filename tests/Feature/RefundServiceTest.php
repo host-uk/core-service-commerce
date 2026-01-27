@@ -1,10 +1,10 @@
 <?php
 
-use Core\Commerce\Models\Payment;
-use Core\Commerce\Models\Refund;
-use Core\Commerce\Notifications\RefundProcessed;
-use Core\Commerce\Services\CommerceService;
-use Core\Commerce\Services\RefundService;
+use Core\Mod\Commerce\Models\Payment;
+use Core\Mod\Commerce\Models\Refund;
+use Core\Mod\Commerce\Notifications\RefundProcessed;
+use Core\Mod\Commerce\Services\CommerceService;
+use Core\Mod\Commerce\Services\RefundService;
 use Core\Mod\Tenant\Models\User;
 use Core\Mod\Tenant\Models\Workspace;
 use Illuminate\Support\Facades\Notification;
@@ -36,7 +36,7 @@ beforeEach(function () {
     ]);
 
     // Mock the gateway
-    $mockGateway = Mockery::mock(\Core\Commerce\Services\PaymentGateway\PaymentGatewayContract::class);
+    $mockGateway = Mockery::mock(\Core\Mod\Commerce\Services\PaymentGateway\PaymentGatewayContract::class);
     $mockGateway->shouldReceive('refund')->andReturn([
         'success' => true,
         'refund_id' => 're_test_123',

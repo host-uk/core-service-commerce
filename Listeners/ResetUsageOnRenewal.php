@@ -1,9 +1,9 @@
 <?php
 
-namespace Core\Commerce\Listeners;
+namespace Core\Mod\Commerce\Listeners;
 
-use Core\Commerce\Events\SubscriptionRenewed;
-use Core\Commerce\Services\UsageBillingService;
+use Core\Mod\Commerce\Events\SubscriptionRenewed;
+use Core\Mod\Commerce\Services\UsageBillingService;
 
 /**
  * Reset usage records when a subscription renews.

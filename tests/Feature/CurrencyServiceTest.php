@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\Tests\Feature;
+namespace Core\Mod\Commerce\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Core\Commerce\Models\ExchangeRate;
-use Core\Commerce\Services\CurrencyService;
+use Core\Mod\Commerce\Models\ExchangeRate;
+use Core\Mod\Commerce\Services\CurrencyService;
 use Tests\TestCase;
 
 class CurrencyServiceTest extends TestCase

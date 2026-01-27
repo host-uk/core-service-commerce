@@ -1,12 +1,12 @@
 <?php
 
-namespace Core\Commerce\Listeners;
+namespace Core\Mod\Commerce\Listeners;
 
-use Core\Commerce\Jobs\ProcessSubscriptionRenewal;
-use Core\Commerce\Events\SubscriptionCancelled;
-use Core\Commerce\Events\SubscriptionCreated;
-use Core\Commerce\Events\SubscriptionRenewed;
-use Core\Commerce\Events\SubscriptionUpdated;
+use Core\Mod\Commerce\Jobs\ProcessSubscriptionRenewal;
+use Core\Mod\Commerce\Events\SubscriptionCancelled;
+use Core\Mod\Commerce\Events\SubscriptionCreated;
+use Core\Mod\Commerce\Events\SubscriptionRenewed;
+use Core\Mod\Commerce\Events\SubscriptionUpdated;
 use Core\Mod\Tenant\Models\Package;
 use Core\Mod\Tenant\Models\WorkspacePackage;
 use Core\Mod\Tenant\Services\EntitlementService;

@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\Services;
+namespace Core\Mod\Commerce\Services;
 
-use Core\Commerce\Models\Entity;
-use Core\Commerce\Models\Inventory;
-use Core\Commerce\Models\InventoryMovement;
-use Core\Commerce\Models\Product;
-use Core\Commerce\Models\Warehouse;
+use Core\Mod\Commerce\Models\Entity;
+use Core\Mod\Commerce\Models\Inventory;
+use Core\Mod\Commerce\Models\InventoryMovement;
+use Core\Mod\Commerce\Models\Product;
+use Core\Mod\Commerce\Models\Warehouse;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 

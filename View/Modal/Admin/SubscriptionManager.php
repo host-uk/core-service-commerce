@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\View\Modal\Admin;
+namespace Core\Mod\Commerce\View\Modal\Admin;
 
-use Core\Commerce\Models\Subscription;
-use Core\Commerce\Services\SubscriptionService;
+use Core\Mod\Commerce\Models\Subscription;
+use Core\Mod\Commerce\Services\SubscriptionService;
 use Core\Mod\Tenant\Models\Workspace;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;

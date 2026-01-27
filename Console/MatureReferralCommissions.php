@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\Console;
+namespace Core\Mod\Commerce\Console;
 
 use Illuminate\Console\Command;
-use Core\Commerce\Services\ReferralService;
+use Core\Mod\Commerce\Services\ReferralService;
 
 /**
  * Mature referral commissions that are past their maturation date.

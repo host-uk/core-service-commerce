@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\View\Modal\Web;
+namespace Core\Mod\Commerce\View\Modal\Web;
 
 use Livewire\Attributes\Computed;
 use Livewire\Component;
-use Core\Commerce\Services\CurrencyService;
+use Core\Mod\Commerce\Services\CurrencyService;
 
 /**
  * Currency selector component.

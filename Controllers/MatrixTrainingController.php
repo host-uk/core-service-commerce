@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\Controllers;
+namespace Core\Mod\Commerce\Controllers;
 
 use Core\Front\Controller;
-use Core\Commerce\Models\Entity;
-use Core\Commerce\Services\PermissionLockedException;
-use Core\Commerce\Services\PermissionMatrixService;
+use Core\Mod\Commerce\Models\Entity;
+use Core\Mod\Commerce\Services\PermissionLockedException;
+use Core\Mod\Commerce\Services\PermissionMatrixService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 

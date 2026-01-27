@@ -1,14 +1,14 @@
 <?php
 
-namespace Core\Commerce\Services\PaymentGateway;
+namespace Core\Mod\Commerce\Services\PaymentGateway;
 
 use Core\Mod\Tenant\Models\Workspace;
 use Illuminate\Support\Facades\Log;
-use Core\Commerce\Models\Order;
-use Core\Commerce\Models\Payment;
-use Core\Commerce\Models\PaymentMethod;
-use Core\Commerce\Models\Refund;
-use Core\Commerce\Models\Subscription;
+use Core\Mod\Commerce\Models\Order;
+use Core\Mod\Commerce\Models\Payment;
+use Core\Mod\Commerce\Models\PaymentMethod;
+use Core\Mod\Commerce\Models\Refund;
+use Core\Mod\Commerce\Models\Subscription;
 use Stripe\StripeClient;
 
 /**

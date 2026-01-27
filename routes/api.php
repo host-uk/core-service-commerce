@@ -3,9 +3,9 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
-use Core\Commerce\Controllers\Api\CommerceController;
-use Core\Commerce\Controllers\Webhooks\BTCPayWebhookController;
-use Core\Commerce\Controllers\Webhooks\StripeWebhookController;
+use Core\Mod\Commerce\Controllers\Api\CommerceController;
+use Core\Mod\Commerce\Controllers\Webhooks\BTCPayWebhookController;
+use Core\Mod\Commerce\Controllers\Webhooks\StripeWebhookController;
 
 /*
 |--------------------------------------------------------------------------

@@ -1,10 +1,10 @@
 <?php
 
-namespace Core\Commerce\Services;
+namespace Core\Mod\Commerce\Services;
 
-use Core\Commerce\Models\Payment;
-use Core\Commerce\Models\Refund;
-use Core\Commerce\Notifications\RefundProcessed;
+use Core\Mod\Commerce\Models\Payment;
+use Core\Mod\Commerce\Models\Refund;
+use Core\Mod\Commerce\Notifications\RefundProcessed;
 use Core\Mod\Tenant\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;

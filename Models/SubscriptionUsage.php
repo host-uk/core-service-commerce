@@ -1,6 +1,6 @@
 <?php
 
-namespace Core\Commerce\Models;
+namespace Core\Mod\Commerce\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;

@@ -1,15 +1,15 @@
 <?php
 
-namespace Core\Commerce\Services;
+namespace Core\Mod\Commerce\Services;
 
 use Core\Mod\Tenant\Models\User;
 use Core\Mod\Tenant\Models\Workspace;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Core\Commerce\Models\CreditNote;
-use Core\Commerce\Models\Order;
-use Core\Commerce\Models\Refund;
+use Core\Mod\Commerce\Models\CreditNote;
+use Core\Mod\Commerce\Models\Order;
+use Core\Mod\Commerce\Models\Refund;
 
 class CreditNoteService
 {

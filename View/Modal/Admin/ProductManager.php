@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\View\Modal\Admin;
+namespace Core\Mod\Commerce\View\Modal\Admin;
 
-use Core\Commerce\Models\Entity;
-use Core\Commerce\Models\Product;
-use Core\Commerce\Models\ProductAssignment;
-use Core\Commerce\Services\ProductCatalogService;
+use Core\Mod\Commerce\Models\Entity;
+use Core\Mod\Commerce\Models\Product;
+use Core\Mod\Commerce\Models\ProductAssignment;
+use Core\Mod\Commerce\Services\ProductCatalogService;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;

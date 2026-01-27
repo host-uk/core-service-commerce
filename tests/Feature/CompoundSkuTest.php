@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-use Core\Commerce\Data\BundleItem;
-use Core\Commerce\Data\ParsedItem;
-use Core\Commerce\Data\SkuOption;
-use Core\Commerce\Services\SkuBuilderService;
-use Core\Commerce\Services\SkuParserService;
+use Core\Mod\Commerce\Data\BundleItem;
+use Core\Mod\Commerce\Data\ParsedItem;
+use Core\Mod\Commerce\Data\SkuOption;
+use Core\Mod\Commerce\Services\SkuBuilderService;
+use Core\Mod\Commerce\Services\SkuParserService;
 
 describe('Compound SKU Parser', function () {
     beforeEach(function () {

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\Services;
+namespace Core\Mod\Commerce\Services;
 
-use Core\Commerce\Data\ParsedItem;
-use Core\Commerce\Data\SkuOption;
-use Core\Commerce\Data\SkuParseResult;
+use Core\Mod\Commerce\Data\ParsedItem;
+use Core\Mod\Commerce\Data\SkuOption;
+use Core\Mod\Commerce\Data\SkuParseResult;
 
 /**
  * Build compound SKU strings from structured data.

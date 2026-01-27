@@ -1,11 +1,11 @@
 <?php
 
-namespace Core\Commerce\View\Modal\Web;
+namespace Core\Mod\Commerce\View\Modal\Web;
 
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
-use Core\Commerce\Models\Order;
+use Core\Mod\Commerce\Models\Order;
 use Core\Mod\Tenant\Models\User;
 
 #[Layout('shared::layouts.checkout')]

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\Controllers\Api;
+namespace Core\Mod\Commerce\Controllers\Api;
 
 use Core\Front\Controller;
 use Core\Mod\Tenant\Models\Package;
@@ -10,12 +10,12 @@ use Core\Mod\Tenant\Models\Workspace;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Core\Commerce\Models\Invoice;
-use Core\Commerce\Models\Order;
-use Core\Commerce\Models\Subscription;
-use Core\Commerce\Services\CommerceService;
-use Core\Commerce\Services\InvoiceService;
-use Core\Commerce\Services\SubscriptionService;
+use Core\Mod\Commerce\Models\Invoice;
+use Core\Mod\Commerce\Models\Order;
+use Core\Mod\Commerce\Models\Subscription;
+use Core\Mod\Commerce\Services\CommerceService;
+use Core\Mod\Commerce\Services\InvoiceService;
+use Core\Mod\Commerce\Services\SubscriptionService;
 
 /**
  * Commerce REST API for MCP agents and external integrations.

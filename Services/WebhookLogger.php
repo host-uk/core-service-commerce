@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\Services;
+namespace Core\Mod\Commerce\Services;
 
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
-use Core\Commerce\Models\Order;
-use Core\Commerce\Models\Subscription;
-use Core\Commerce\Models\WebhookEvent;
+use Core\Mod\Commerce\Models\Order;
+use Core\Mod\Commerce\Models\Subscription;
+use Core\Mod\Commerce\Models\WebhookEvent;
 
 /**
  * Service for logging webhook events from payment gateways.

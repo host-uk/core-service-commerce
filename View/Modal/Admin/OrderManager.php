@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\View\Modal\Admin;
+namespace Core\Mod\Commerce\View\Modal\Admin;
 
-use Core\Commerce\Models\Order;
+use Core\Mod\Commerce\Models\Order;
 use Core\Mod\Tenant\Models\Workspace;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;

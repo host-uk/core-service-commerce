@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\Mail;
+namespace Core\Mod\Commerce\Mail;
 
-use Core\Commerce\Models\Invoice;
+use Core\Mod\Commerce\Models\Invoice;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Attachment;

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\View\Modal\Admin;
+namespace Core\Mod\Commerce\View\Modal\Admin;
 
 use Core\Mod\Tenant\Models\Package;
 use Livewire\Attributes\Computed;
@@ -10,8 +10,8 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Core\Commerce\Models\Coupon;
-use Core\Commerce\Services\CouponService;
+use Core\Mod\Commerce\Models\Coupon;
+use Core\Mod\Commerce\Services\CouponService;
 
 #[Layout('hub::admin.layouts.app')]
 #[Title('Coupons')]

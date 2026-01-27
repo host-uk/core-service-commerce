@@ -1,17 +1,17 @@
 <?php
 
-namespace Core\Commerce\Services;
+namespace Core\Mod\Commerce\Services;
 
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
-use Core\Commerce\Models\Invoice;
-use Core\Commerce\Models\Subscription;
-use Core\Commerce\Notifications\AccountSuspended;
-use Core\Commerce\Notifications\PaymentFailed;
-use Core\Commerce\Notifications\PaymentRetry;
-use Core\Commerce\Notifications\SubscriptionCancelled;
-use Core\Commerce\Notifications\SubscriptionPaused;
+use Core\Mod\Commerce\Models\Invoice;
+use Core\Mod\Commerce\Models\Subscription;
+use Core\Mod\Commerce\Notifications\AccountSuspended;
+use Core\Mod\Commerce\Notifications\PaymentFailed;
+use Core\Mod\Commerce\Notifications\PaymentRetry;
+use Core\Mod\Commerce\Notifications\SubscriptionCancelled;
+use Core\Mod\Commerce\Notifications\SubscriptionPaused;
 use Core\Mod\Tenant\Services\EntitlementService;
 
 /**

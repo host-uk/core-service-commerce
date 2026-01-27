@@ -1,11 +1,11 @@
 <?php
 
-namespace Core\Commerce\Console;
+namespace Core\Mod\Commerce\Console;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
-use Core\Commerce\Models\Subscription;
-use Core\Commerce\Services\UsageBillingService;
+use Core\Mod\Commerce\Models\Subscription;
+use Core\Mod\Commerce\Services\UsageBillingService;
 
 /**
  * Sync usage records to Stripe metered billing.

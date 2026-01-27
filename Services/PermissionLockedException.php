@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\Services;
+namespace Core\Mod\Commerce\Services;
 
 use Exception;
 

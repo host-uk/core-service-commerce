@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\Data;
+namespace Core\Mod\Commerce\Data;
 
 /**
  * A single option on a SKU.

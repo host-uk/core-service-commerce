@@ -7,9 +7,9 @@
  * Tests the happy path user journey for products, orders, and subscriptions.
  */
 
-use Core\Commerce\Models\Order;
-use Core\Commerce\Models\Product;
-use Core\Commerce\Models\Subscription;
+use Core\Mod\Commerce\Models\Order;
+use Core\Mod\Commerce\Models\Product;
+use Core\Mod\Commerce\Models\Subscription;
 use Core\Mod\Tenant\Models\User;
 use Core\Mod\Tenant\Models\Workspace;
 

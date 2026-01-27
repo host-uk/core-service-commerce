@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\Listeners;
+namespace Core\Mod\Commerce\Listeners;
 
-use Core\Commerce\Events\SubscriptionCreated;
+use Core\Mod\Commerce\Events\SubscriptionCreated;
 use Mod\Trees\Models\TreePlanting;
 use Core\Mod\Tenant\Models\AgentReferralBonus;
 use Illuminate\Support\Facades\Log;

@@ -1,6 +1,6 @@
 <?php
 
-namespace Core\Commerce\Controllers\Webhooks;
+namespace Core\Mod\Commerce\Controllers\Webhooks;
 
 use Carbon\Carbon;
 use Core\Front\Controller;
@@ -10,17 +10,17 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Core\Commerce\Models\Order;
-use Core\Commerce\Models\Payment;
-use Core\Commerce\Models\PaymentMethod;
-use Core\Commerce\Models\Subscription;
-use Core\Commerce\Notifications\OrderConfirmation;
-use Core\Commerce\Notifications\PaymentFailed;
-use Core\Commerce\Notifications\SubscriptionCancelled;
-use Core\Commerce\Services\CommerceService;
-use Core\Commerce\Services\InvoiceService;
-use Core\Commerce\Services\PaymentGateway\StripeGateway;
-use Core\Commerce\Services\WebhookLogger;
+use Core\Mod\Commerce\Models\Order;
+use Core\Mod\Commerce\Models\Payment;
+use Core\Mod\Commerce\Models\PaymentMethod;
+use Core\Mod\Commerce\Models\Subscription;
+use Core\Mod\Commerce\Notifications\OrderConfirmation;
+use Core\Mod\Commerce\Notifications\PaymentFailed;
+use Core\Mod\Commerce\Notifications\SubscriptionCancelled;
+use Core\Mod\Commerce\Services\CommerceService;
+use Core\Mod\Commerce\Services\InvoiceService;
+use Core\Mod\Commerce\Services\PaymentGateway\StripeGateway;
+use Core\Mod\Commerce\Services\WebhookLogger;
 
 /**
  * Handle Stripe webhooks.

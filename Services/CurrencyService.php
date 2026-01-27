@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\Services;
+namespace Core\Mod\Commerce\Services;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
-use Core\Commerce\Models\ExchangeRate;
+use Core\Mod\Commerce\Models\ExchangeRate;
 
 /**
  * Currency service for multi-currency support.

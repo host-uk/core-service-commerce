@@ -1,15 +1,15 @@
 <?php
 
-namespace Core\Commerce\View\Modal\Web;
+namespace Core\Mod\Commerce\View\Modal\Web;
 
 use Core\Mod\Tenant\Models\Workspace;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
-use Core\Commerce\Models\PaymentMethod;
-use Core\Commerce\Services\PaymentGateway\StripeGateway;
-use Core\Commerce\Services\PaymentMethodService;
+use Core\Mod\Commerce\Models\PaymentMethod;
+use Core\Mod\Commerce\Services\PaymentGateway\StripeGateway;
+use Core\Mod\Commerce\Services\PaymentMethodService;
 
 #[Layout('hub::admin.layouts.app')]
 class PaymentMethods extends Component

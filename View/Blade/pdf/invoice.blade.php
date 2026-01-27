@@ -386,8 +386,8 @@
                         @endif
                     </td>
                     <td class="item-quantity">{{ $item->quantity }}</td>
-                    <td class="item-price">{{ app(\Core\Commerce\Services\CommerceService::class)->formatMoney($item->unit_price, $invoice->currency) }}</td>
-                    <td class="item-price">{{ app(\Core\Commerce\Services\CommerceService::class)->formatMoney($item->total, $invoice->currency) }}</td>
+                    <td class="item-price">{{ app(\Core\Mod\Commerce\Services\CommerceService::class)->formatMoney($item->unit_price, $invoice->currency) }}</td>
+                    <td class="item-price">{{ app(\Core\Mod\Commerce\Services\CommerceService::class)->formatMoney($item->total, $invoice->currency) }}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -400,12 +400,12 @@
                 <div class="totals-content">
                     <div class="total-line">
                         <span class="total-label">Subtotal</span>
-                        <span class="total-value">{{ app(\Core\Commerce\Services\CommerceService::class)->formatMoney($invoice->subtotal, $invoice->currency) }}</span>
+                        <span class="total-value">{{ app(\Core\Mod\Commerce\Services\CommerceService::class)->formatMoney($invoice->subtotal, $invoice->currency) }}</span>
                     </div>
                     @if($invoice->discount_amount > 0)
                     <div class="total-line">
                         <span class="total-label">Discount</span>
-                        <span class="total-value">-{{ app(\Core\Commerce\Services\CommerceService::class)->formatMoney($invoice->discount_amount, $invoice->currency) }}</span>
+                        <span class="total-value">-{{ app(\Core\Mod\Commerce\Services\CommerceService::class)->formatMoney($invoice->discount_amount, $invoice->currency) }}</span>
                     </div>
                     @endif
                     @if($invoice->tax_amount > 0)
@@ -417,12 +417,12 @@
                                 VAT
                             @endif
                         </span>
-                        <span class="total-value">{{ app(\Core\Commerce\Services\CommerceService::class)->formatMoney($invoice->tax_amount, $invoice->currency) }}</span>
+                        <span class="total-value">{{ app(\Core\Mod\Commerce\Services\CommerceService::class)->formatMoney($invoice->tax_amount, $invoice->currency) }}</span>
                     </div>
                     @endif
                     <div class="total-line grand-total">
                         <span class="total-label">Total</span>
-                        <span class="total-value">{{ app(\Core\Commerce\Services\CommerceService::class)->formatMoney($invoice->total, $invoice->currency) }}</span>
+                        <span class="total-value">{{ app(\Core\Mod\Commerce\Services\CommerceService::class)->formatMoney($invoice->total, $invoice->currency) }}</span>
                     </div>
                 </div>
             </div>

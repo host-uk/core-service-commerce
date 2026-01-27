@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\Tests\Feature;
+namespace Core\Mod\Commerce\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Core\Commerce\Models\ContentOverride;
-use Core\Commerce\Models\Entity;
-use Core\Commerce\Models\Product;
-use Core\Commerce\Services\ContentOverrideService;
+use Core\Mod\Commerce\Models\ContentOverride;
+use Core\Mod\Commerce\Models\Entity;
+use Core\Mod\Commerce\Models\Product;
+use Core\Mod\Commerce\Services\ContentOverrideService;
 use Tests\TestCase;
 
 class ContentOverrideServiceTest extends TestCase

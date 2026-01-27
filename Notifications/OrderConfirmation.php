@@ -1,9 +1,9 @@
 <?php
 
-namespace Core\Commerce\Notifications;
+namespace Core\Mod\Commerce\Notifications;
 
-use Core\Commerce\Models\Order;
-use Core\Commerce\Services\CommerceService;
+use Core\Mod\Commerce\Models\Order;
+use Core\Mod\Commerce\Services\CommerceService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;

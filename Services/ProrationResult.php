@@ -1,6 +1,6 @@
 <?php
 
-namespace Core\Commerce\Services;
+namespace Core\Mod\Commerce\Services;
 
 /**
  * Data transfer object for proration calculations.

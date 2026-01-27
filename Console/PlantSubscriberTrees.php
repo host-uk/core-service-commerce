@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\Console;
+namespace Core\Mod\Commerce\Console;
 
-use Core\Commerce\Models\Subscription;
+use Core\Mod\Commerce\Models\Subscription;
 use Mod\Trees\Models\TreePlanting;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;

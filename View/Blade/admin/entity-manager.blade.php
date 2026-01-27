@@ -181,7 +181,7 @@
                             <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
                                 <span class="text-sm text-gray-500 dark:text-gray-400">Parent:</span>
                                 <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    {{ \Core\Commerce\Models\Entity::find($parent_id)?->name }}
+                                    {{ \Core\Mod\Commerce\Models\Entity::find($parent_id)?->name }}
                                 </span>
                             </div>
                         @endif

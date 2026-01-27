@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\View\Modal\Admin;
+namespace Core\Mod\Commerce\View\Modal\Admin;
 
-use Core\Commerce\Models\Coupon;
-use Core\Commerce\Models\Order;
-use Core\Commerce\Models\Subscription;
+use Core\Mod\Commerce\Models\Coupon;
+use Core\Mod\Commerce\Models\Order;
+use Core\Mod\Commerce\Models\Subscription;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;

@@ -1,14 +1,14 @@
 <?php
 
-namespace Core\Commerce\Services\PaymentGateway;
+namespace Core\Mod\Commerce\Services\PaymentGateway;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Core\Commerce\Models\Order;
-use Core\Commerce\Models\Payment;
-use Core\Commerce\Models\PaymentMethod;
-use Core\Commerce\Models\Subscription;
+use Core\Mod\Commerce\Models\Order;
+use Core\Mod\Commerce\Models\Payment;
+use Core\Mod\Commerce\Models\PaymentMethod;
+use Core\Mod\Commerce\Models\Subscription;
 use Core\Mod\Tenant\Models\Workspace;
 
 /**

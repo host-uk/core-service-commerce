@@ -1,6 +1,6 @@
 <?php
 
-namespace Core\Commerce\Models;
+namespace Core\Mod\Commerce\Models;
 
 use Core\Mod\Tenant\Models\User;
 use Core\Mod\Tenant\Models\Workspace;

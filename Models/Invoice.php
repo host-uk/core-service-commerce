@@ -1,6 +1,6 @@
 <?php
 
-namespace Core\Commerce\Models;
+namespace Core\Mod\Commerce\Models;
 
 use Core\Mod\Tenant\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -35,9 +35,9 @@ class Invoice extends Model
 {
     use HasFactory;
 
-    protected static function newFactory(): \Core\Commerce\Database\Factories\InvoiceFactory
+    protected static function newFactory(): \Core\Mod\Commerce\Database\Factories\InvoiceFactory
     {
-        return \Core\Commerce\Database\Factories\InvoiceFactory::new();
+        return \Core\Mod\Commerce\Database\Factories\InvoiceFactory::new();
     }
 
     protected $fillable = [

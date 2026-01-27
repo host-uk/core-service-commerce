@@ -1,8 +1,8 @@
 <?php
 
-namespace Core\Commerce\Mcp\Tools;
+namespace Core\Mod\Commerce\Mcp\Tools;
 
-use Core\Commerce\Models\Subscription;
+use Core\Mod\Commerce\Models\Subscription;
 use Core\Mod\Tenant\Models\Workspace;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;

@@ -1,15 +1,15 @@
 <?php
 
-namespace Core\Commerce\Services;
+namespace Core\Mod\Commerce\Services;
 
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
-use Core\Commerce\Mail\InvoiceGenerated;
-use Core\Commerce\Models\Invoice;
-use Core\Commerce\Models\InvoiceItem;
-use Core\Commerce\Models\Order;
-use Core\Commerce\Models\Payment;
+use Core\Mod\Commerce\Mail\InvoiceGenerated;
+use Core\Mod\Commerce\Models\Invoice;
+use Core\Mod\Commerce\Models\InvoiceItem;
+use Core\Mod\Commerce\Models\Order;
+use Core\Mod\Commerce\Models\Payment;
 use Core\Mod\Tenant\Models\Workspace;
 
 /**

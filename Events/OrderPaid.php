@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\Events;
+namespace Core\Mod\Commerce\Events;
 
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
-use Core\Commerce\Models\Order;
-use Core\Commerce\Models\Payment;
+use Core\Mod\Commerce\Models\Order;
+use Core\Mod\Commerce\Models\Payment;
 
 /**
  * Event fired when an order is successfully paid.

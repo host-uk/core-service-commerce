@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce;
+namespace Core\Mod\Commerce;
 
 use Core\Events\AdminPanelBooting;
 use Core\Events\ApiRoutesRegistering;
@@ -11,11 +11,11 @@ use Core\Events\WebRoutesRegistering;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
-use Core\Commerce\Listeners\ProvisionSocialHostSubscription;
-use Core\Commerce\Listeners\RewardAgentReferralOnSubscription;
-use Core\Commerce\Services\PaymentGateway\BTCPayGateway;
-use Core\Commerce\Services\PaymentGateway\PaymentGatewayContract;
-use Core\Commerce\Services\PaymentGateway\StripeGateway;
+use Core\Mod\Commerce\Listeners\ProvisionSocialHostSubscription;
+use Core\Mod\Commerce\Listeners\RewardAgentReferralOnSubscription;
+use Core\Mod\Commerce\Services\PaymentGateway\BTCPayGateway;
+use Core\Mod\Commerce\Services\PaymentGateway\PaymentGatewayContract;
+use Core\Mod\Commerce\Services\PaymentGateway\StripeGateway;
 
 /**
  * Commerce Module Boot
@@ -46,9 +46,9 @@ class Boot extends ServiceProvider
 
         // Laravel event listeners (not lifecycle events)
         Event::subscribe(ProvisionSocialHostSubscription::class);
-        Event::listen(\Core\Commerce\Events\SubscriptionCreated::class, RewardAgentReferralOnSubscription::class);
-        Event::listen(\Core\Commerce\Events\SubscriptionRenewed::class, Listeners\ResetUsageOnRenewal::class);
-        Event::listen(\Core\Commerce\Events\OrderPaid::class, Listeners\CreateReferralCommission::class);
+        Event::listen(\Core\Mod\Commerce\Events\SubscriptionCreated::class, RewardAgentReferralOnSubscription::class);
+        Event::listen(\Core\Mod\Commerce\Events\SubscriptionRenewed::class, Listeners\ResetUsageOnRenewal::class);
+        Event::listen(\Core\Mod\Commerce\Events\OrderPaid::class, Listeners\CreateReferralCommission::class);
     }
 
     public function register(): void
@@ -59,21 +59,21 @@ class Boot extends ServiceProvider
         );
 
         // Core Services
-        $this->app->singleton(\Core\Commerce\Services\CommerceService::class);
-        $this->app->singleton(\Core\Commerce\Services\SubscriptionService::class);
-        $this->app->singleton(\Core\Commerce\Services\InvoiceService::class);
-        $this->app->singleton(\Core\Commerce\Services\PermissionMatrixService::class);
-        $this->app->singleton(\Core\Commerce\Services\CouponService::class);
-        $this->app->singleton(\Core\Commerce\Services\TaxService::class);
-        $this->app->singleton(\Core\Commerce\Services\CurrencyService::class);
-        $this->app->singleton(\Core\Commerce\Services\ContentOverrideService::class);
-        $this->app->singleton(\Core\Commerce\Services\DunningService::class);
-        $this->app->singleton(\Core\Commerce\Services\SkuParserService::class);
-        $this->app->singleton(\Core\Commerce\Services\SkuBuilderService::class);
-        $this->app->singleton(\Core\Commerce\Services\CreditNoteService::class);
-        $this->app->singleton(\Core\Commerce\Services\PaymentMethodService::class);
-        $this->app->singleton(\Core\Commerce\Services\UsageBillingService::class);
-        $this->app->singleton(\Core\Commerce\Services\ReferralService::class);
+        $this->app->singleton(\Core\Mod\Commerce\Services\CommerceService::class);
+        $this->app->singleton(\Core\Mod\Commerce\Services\SubscriptionService::class);
+        $this->app->singleton(\Core\Mod\Commerce\Services\InvoiceService::class);
+        $this->app->singleton(\Core\Mod\Commerce\Services\PermissionMatrixService::class);
+        $this->app->singleton(\Core\Mod\Commerce\Services\CouponService::class);
+        $this->app->singleton(\Core\Mod\Commerce\Services\TaxService::class);
+        $this->app->singleton(\Core\Mod\Commerce\Services\CurrencyService::class);
+        $this->app->singleton(\Core\Mod\Commerce\Services\ContentOverrideService::class);
+        $this->app->singleton(\Core\Mod\Commerce\Services\DunningService::class);
+        $this->app->singleton(\Core\Mod\Commerce\Services\SkuParserService::class);
+        $this->app->singleton(\Core\Mod\Commerce\Services\SkuBuilderService::class);
+        $this->app->singleton(\Core\Mod\Commerce\Services\CreditNoteService::class);
+        $this->app->singleton(\Core\Mod\Commerce\Services\PaymentMethodService::class);
+        $this->app->singleton(\Core\Mod\Commerce\Services\UsageBillingService::class);
+        $this->app->singleton(\Core\Mod\Commerce\Services\ReferralService::class);
 
         // Payment Gateways
         $this->app->singleton('commerce.gateway.btcpay', function ($app) {

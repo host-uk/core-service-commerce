@@ -1,14 +1,14 @@
 <?php
 
-namespace Core\Commerce\Services;
+namespace Core\Mod\Commerce\Services;
 
 use Core\Mod\Tenant\Models\User;
 use Core\Mod\Tenant\Models\Workspace;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Core\Commerce\Models\PaymentMethod;
-use Core\Commerce\Services\PaymentGateway\StripeGateway;
+use Core\Mod\Commerce\Models\PaymentMethod;
+use Core\Mod\Commerce\Services\PaymentGateway\StripeGateway;
 
 /**
  * Service for managing payment methods.

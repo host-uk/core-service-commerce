@@ -1,8 +1,8 @@
 <?php
 
-namespace Core\Commerce\View\Modal\Web;
+namespace Core\Mod\Commerce\View\Modal\Web;
 
-use Core\Commerce\Services\CommerceService;
+use Core\Mod\Commerce\Services\CommerceService;
 use Core\Mod\Tenant\Models\Workspace;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\Middleware;
+namespace Core\Mod\Commerce\Middleware;
 
-use Core\Commerce\Models\Entity;
-use Core\Commerce\Services\PermissionMatrixService;
+use Core\Mod\Commerce\Models\Entity;
+use Core\Mod\Commerce\Services\PermissionMatrixService;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;

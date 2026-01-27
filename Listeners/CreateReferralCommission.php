@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\Listeners;
+namespace Core\Mod\Commerce\Listeners;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
-use Core\Commerce\Events\OrderPaid;
-use Core\Commerce\Services\ReferralService;
+use Core\Mod\Commerce\Events\OrderPaid;
+use Core\Mod\Commerce\Services\ReferralService;
 
 /**
  * Creates referral commission when an order is paid.

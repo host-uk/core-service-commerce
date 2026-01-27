@@ -1,8 +1,8 @@
 <?php
 
-namespace Core\Commerce\Data;
+namespace Core\Mod\Commerce\Data;
 
-use Core\Commerce\Models\Coupon;
+use Core\Mod\Commerce\Models\Coupon;
 
 /**
  * Coupon validation result.

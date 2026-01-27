@@ -1,11 +1,11 @@
 <?php
 
-namespace Core\Commerce\View\Modal\Web;
+namespace Core\Mod\Commerce\View\Modal\Web;
 
-use Core\Commerce\Models\Subscription as SubscriptionModel;
-use Core\Commerce\Notifications\SubscriptionCancelled;
-use Core\Commerce\Services\CommerceService;
-use Core\Commerce\Services\SubscriptionService;
+use Core\Mod\Commerce\Models\Subscription as SubscriptionModel;
+use Core\Mod\Commerce\Notifications\SubscriptionCancelled;
+use Core\Mod\Commerce\Services\CommerceService;
+use Core\Mod\Commerce\Services\SubscriptionService;
 use Core\Mod\Tenant\Models\Workspace;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;

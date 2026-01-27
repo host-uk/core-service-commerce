@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\View\Modal\Admin;
+namespace Core\Mod\Commerce\View\Modal\Admin;
 
-use Core\Commerce\Models\Entity;
-use Core\Commerce\Models\PermissionMatrix;
-use Core\Commerce\Models\PermissionRequest;
-use Core\Commerce\Services\PermissionLockedException;
-use Core\Commerce\Services\PermissionMatrixService;
+use Core\Mod\Commerce\Models\Entity;
+use Core\Mod\Commerce\Models\PermissionMatrix;
+use Core\Mod\Commerce\Models\PermissionRequest;
+use Core\Mod\Commerce\Services\PermissionLockedException;
+use Core\Mod\Commerce\Services\PermissionMatrixService;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;

@@ -1,6 +1,6 @@
 <?php
 
-namespace Core\Commerce\View\Modal\Web;
+namespace Core\Mod\Commerce\View\Modal\Web;
 
 use Core\Mod\Tenant\Models\Package;
 use Core\Mod\Tenant\Models\Workspace;
@@ -8,9 +8,9 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
-use Core\Commerce\Models\Subscription;
-use Core\Commerce\Services\CommerceService;
-use Core\Commerce\Services\SubscriptionService;
+use Core\Mod\Commerce\Models\Subscription;
+use Core\Mod\Commerce\Services\CommerceService;
+use Core\Mod\Commerce\Services\SubscriptionService;
 
 /**
  * Plan change UI for upgrading or downgrading subscriptions.

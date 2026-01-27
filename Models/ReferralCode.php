@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\Models;
+namespace Core\Mod\Commerce\Models;
 
 use Core\Mod\Tenant\Models\User;
 use Illuminate\Database\Eloquent\Model;

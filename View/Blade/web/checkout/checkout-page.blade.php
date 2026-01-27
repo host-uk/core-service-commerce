@@ -428,7 +428,7 @@
                             </div>
                             @if ($displayCurrency !== $this->baseCurrency)
                                 <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                                    Approx. {{ app(\Core\Commerce\Services\CurrencyService::class)->format($this->baseTotal, $this->baseCurrency) }}
+                                    Approx. {{ app(\Core\Mod\Commerce\Services\CurrencyService::class)->format($this->baseTotal, $this->baseCurrency) }}
                                     at current rates
                                 </p>
                             @endif

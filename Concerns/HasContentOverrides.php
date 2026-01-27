@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\Concerns;
+namespace Core\Mod\Commerce\Concerns;
 
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Core\Commerce\Models\ContentOverride;
-use Core\Commerce\Models\Entity;
-use Core\Commerce\Services\ContentOverrideService;
+use Core\Mod\Commerce\Models\ContentOverride;
+use Core\Mod\Commerce\Models\Entity;
+use Core\Mod\Commerce\Services\ContentOverrideService;
 
 /**
  * Trait for models that can have content overrides.

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\Models;
+namespace Core\Mod\Commerce\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Core\Commerce\Concerns\HasContentOverrides;
+use Core\Mod\Commerce\Concerns\HasContentOverrides;
 
 /**
  * Product Assignment - Links products to M2/M3 entities.

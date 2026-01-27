@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\Models;
+namespace Core\Mod\Commerce\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
-use Core\Commerce\Concerns\HasContentOverrides;
+use Core\Mod\Commerce\Concerns\HasContentOverrides;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -287,7 +287,7 @@ class Product extends Model
     public function formatPrice(int $amount, ?string $currency = null): string
     {
         $currency = $currency ?? $this->currency;
-        $currencyService = app(\Core\Commerce\Services\CurrencyService::class);
+        $currencyService = app(\Core\Mod\Commerce\Services\CurrencyService::class);
 
         return $currencyService->format($amount, $currency, isCents: true);
     }

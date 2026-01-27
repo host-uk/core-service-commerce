@@ -1,8 +1,8 @@
 <?php
 
-namespace Core\Commerce\Notifications;
+namespace Core\Mod\Commerce\Notifications;
 
-use Core\Commerce\Models\Invoice;
+use Core\Mod\Commerce\Models\Invoice;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;

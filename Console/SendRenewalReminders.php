@@ -1,10 +1,10 @@
 <?php
 
-namespace Core\Commerce\Console;
+namespace Core\Mod\Commerce\Console;
 
-use Core\Commerce\Models\Subscription;
-use Core\Commerce\Notifications\UpcomingRenewal;
-use Core\Commerce\Services\CommerceService;
+use Core\Mod\Commerce\Models\Subscription;
+use Core\Mod\Commerce\Notifications\UpcomingRenewal;
+use Core\Mod\Commerce\Services\CommerceService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 

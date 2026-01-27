@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\Services;
+namespace Core\Mod\Commerce\Services;
 
-use Core\Commerce\Models\Entity;
-use Core\Commerce\Models\Product;
-use Core\Commerce\Models\ProductAssignment;
+use Core\Mod\Commerce\Models\Entity;
+use Core\Mod\Commerce\Models\Product;
+use Core\Mod\Commerce\Models\ProductAssignment;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 

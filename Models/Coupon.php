@@ -1,11 +1,11 @@
 <?php
 
-namespace Core\Commerce\Models;
+namespace Core\Mod\Commerce\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Core\Commerce\Contracts\Orderable;
+use Core\Mod\Commerce\Contracts\Orderable;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -36,9 +36,9 @@ class Coupon extends Model
     use HasFactory;
     use LogsActivity;
 
-    protected static function newFactory(): \Core\Commerce\Database\Factories\CouponFactory
+    protected static function newFactory(): \Core\Mod\Commerce\Database\Factories\CouponFactory
     {
-        return \Core\Commerce\Database\Factories\CouponFactory::new();
+        return \Core\Mod\Commerce\Database\Factories\CouponFactory::new();
     }
 
     protected $fillable = [

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\Services;
+namespace Core\Mod\Commerce\Services;
 
-use Core\Commerce\Models\Entity;
-use Core\Commerce\Models\PermissionMatrix;
-use Core\Commerce\Models\PermissionRequest;
+use Core\Mod\Commerce\Models\Entity;
+use Core\Mod\Commerce\Models\PermissionMatrix;
+use Core\Mod\Commerce\Models\PermissionRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 

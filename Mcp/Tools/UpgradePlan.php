@@ -1,9 +1,9 @@
 <?php
 
-namespace Core\Commerce\Mcp\Tools;
+namespace Core\Mod\Commerce\Mcp\Tools;
 
-use Core\Commerce\Models\Subscription;
-use Core\Commerce\Services\SubscriptionService;
+use Core\Mod\Commerce\Models\Subscription;
+use Core\Mod\Commerce\Services\SubscriptionService;
 use Core\Mod\Tenant\Models\Workspace;
 use Core\Mod\Tenant\Models\Package;
 use Illuminate\Contracts\JsonSchema\JsonSchema;

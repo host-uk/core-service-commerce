@@ -1,10 +1,10 @@
 <?php
 
-namespace Core\Commerce\Console;
+namespace Core\Mod\Commerce\Console;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
-use Core\Commerce\Models\Order;
+use Core\Mod\Commerce\Models\Order;
 
 class CleanupExpiredOrders extends Command
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Core\Commerce\View\Modal\Web;
+namespace Core\Mod\Commerce\View\Modal\Web;
 
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
-use Core\Commerce\Models\Order;
+use Core\Mod\Commerce\Models\Order;
 use Core\Mod\Tenant\Models\User;
 use Core\Mod\Tenant\Models\Workspace;
 

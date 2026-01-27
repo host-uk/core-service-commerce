@@ -1,8 +1,8 @@
 <?php
 
-namespace Core\Commerce\Events;
+namespace Core\Mod\Commerce\Events;
 
-use Core\Commerce\Models\Subscription;
+use Core\Mod\Commerce\Models\Subscription;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 

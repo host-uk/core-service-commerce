@@ -1,6 +1,6 @@
 <?php
 
-namespace Core\Commerce\Services;
+namespace Core\Mod\Commerce\Services;
 
 use Carbon\Carbon;
 use Core\Mod\Tenant\Models\User;
@@ -8,13 +8,13 @@ use Core\Mod\Tenant\Models\Workspace;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Core\Commerce\Models\Invoice;
-use Core\Commerce\Models\InvoiceItem;
-use Core\Commerce\Models\Subscription;
-use Core\Commerce\Models\SubscriptionUsage;
-use Core\Commerce\Models\UsageEvent;
-use Core\Commerce\Models\UsageMeter;
-use Core\Commerce\Services\PaymentGateway\StripeGateway;
+use Core\Mod\Commerce\Models\Invoice;
+use Core\Mod\Commerce\Models\InvoiceItem;
+use Core\Mod\Commerce\Models\Subscription;
+use Core\Mod\Commerce\Models\SubscriptionUsage;
+use Core\Mod\Commerce\Models\UsageEvent;
+use Core\Mod\Commerce\Models\UsageMeter;
+use Core\Mod\Commerce\Services\PaymentGateway\StripeGateway;
 
 /**
  * Usage-based billing service.

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\Controllers;
+namespace Core\Mod\Commerce\Controllers;
 
 use Core\Front\Controller;
-use Core\Commerce\Models\Invoice;
-use Core\Commerce\Services\InvoiceService;
+use Core\Mod\Commerce\Models\Invoice;
+use Core\Mod\Commerce\Services\InvoiceService;
 use Core\Mod\Tenant\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;

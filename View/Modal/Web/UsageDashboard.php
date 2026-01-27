@@ -1,14 +1,14 @@
 <?php
 
-namespace Core\Commerce\View\Modal\Web;
+namespace Core\Mod\Commerce\View\Modal\Web;
 
 use Core\Mod\Tenant\Models\Workspace;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
-use Core\Commerce\Models\Subscription;
-use Core\Commerce\Services\CommerceService;
-use Core\Commerce\Services\UsageBillingService;
+use Core\Mod\Commerce\Models\Subscription;
+use Core\Mod\Commerce\Services\CommerceService;
+use Core\Mod\Commerce\Services\UsageBillingService;
 
 /**
  * Usage Dashboard component.

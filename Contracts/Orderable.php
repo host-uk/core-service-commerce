@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\Contracts;
+namespace Core\Mod\Commerce\Contracts;
 
 /**
  * Contract for entities that can place orders.

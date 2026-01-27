@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\View\Modal\Admin;
+namespace Core\Mod\Commerce\View\Modal\Admin;
 
-use Core\Commerce\Models\Entity;
+use Core\Mod\Commerce\Models\Entity;
 use Core\Mod\Tenant\Models\Workspace;
 use Livewire\Attributes\Layout;
 use Livewire\Component;

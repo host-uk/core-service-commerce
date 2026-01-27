@@ -1,8 +1,8 @@
 <?php
 
-namespace Core\Commerce\Mcp\Tools;
+namespace Core\Mod\Commerce\Mcp\Tools;
 
-use Core\Commerce\Models\Coupon;
+use Core\Mod\Commerce\Models\Coupon;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;

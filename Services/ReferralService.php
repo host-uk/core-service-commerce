@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace Core\Commerce\Services;
+namespace Core\Mod\Commerce\Services;
 
 use Core\Mod\Tenant\Models\User;
 use Mod\Bio\Models\Page;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Core\Commerce\Models\Order;
-use Core\Commerce\Models\Referral;
-use Core\Commerce\Models\ReferralCode;
-use Core\Commerce\Models\ReferralCommission;
-use Core\Commerce\Models\ReferralPayout;
+use Core\Mod\Commerce\Models\Order;
+use Core\Mod\Commerce\Models\Referral;
+use Core\Mod\Commerce\Models\ReferralCode;
+use Core\Mod\Commerce\Models\ReferralCommission;
+use Core\Mod\Commerce\Models\ReferralPayout;
 
 /**
  * Service for managing referrals and affiliate commissions.

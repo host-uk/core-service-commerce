@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Core\Commerce\Controllers\MatrixTrainingController;
+use Core\Mod\Commerce\Controllers\MatrixTrainingController;
 use Illuminate\Support\Facades\Route;
 
 /*

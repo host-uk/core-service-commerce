@@ -2,9 +2,9 @@
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
-use Core\Commerce\Events\SubscriptionRenewed;
-use Core\Commerce\Jobs\ProcessSubscriptionRenewal;
-use Core\Commerce\Models\Subscription;
+use Core\Mod\Commerce\Events\SubscriptionRenewed;
+use Core\Mod\Commerce\Jobs\ProcessSubscriptionRenewal;
+use Core\Mod\Commerce\Models\Subscription;
 use Core\Mod\Tenant\Models\Boost;
 use Core\Mod\Tenant\Models\EntitlementLog;
 use Core\Mod\Tenant\Models\Feature;

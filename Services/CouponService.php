@@ -1,15 +1,15 @@
 <?php
 
-namespace Core\Commerce\Services;
+namespace Core\Mod\Commerce\Services;
 
 use Core\Mod\Tenant\Models\Package;
 use Core\Mod\Tenant\Models\Workspace;
 use Illuminate\Database\Eloquent\Model;
-use Core\Commerce\Contracts\Orderable;
-use Core\Commerce\Data\CouponValidationResult;
-use Core\Commerce\Models\Coupon;
-use Core\Commerce\Models\CouponUsage;
-use Core\Commerce\Models\Order;
+use Core\Mod\Commerce\Contracts\Orderable;
+use Core\Mod\Commerce\Data\CouponValidationResult;
+use Core\Mod\Commerce\Models\Coupon;
+use Core\Mod\Commerce\Models\CouponUsage;
+use Core\Mod\Commerce\Models\Order;
 
 /**
  * Coupon validation and application service.
