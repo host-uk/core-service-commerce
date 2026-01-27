@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Core\Mod\Commerce\View\Modal\Admin;
 
 use Core\Mod\Commerce\Models\Entity;
-use Core\Mod\Tenant\Models\Workspace;
+use Core\Tenant\Models\Workspace;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 

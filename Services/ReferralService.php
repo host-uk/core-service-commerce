@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Core\Mod\Commerce\Services;
 
-use Core\Mod\Tenant\Models\User;
+use Core\Tenant\Models\User;
 use Mod\Bio\Models\Page;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;

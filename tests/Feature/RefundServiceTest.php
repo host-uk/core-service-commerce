@@ -5,8 +5,8 @@ use Core\Mod\Commerce\Models\Refund;
 use Core\Mod\Commerce\Notifications\RefundProcessed;
 use Core\Mod\Commerce\Services\CommerceService;
 use Core\Mod\Commerce\Services\RefundService;
-use Core\Mod\Tenant\Models\User;
-use Core\Mod\Tenant\Models\Workspace;
+use Core\Tenant\Models\User;
+use Core\Tenant\Models\Workspace;
 use Illuminate\Support\Facades\Notification;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);

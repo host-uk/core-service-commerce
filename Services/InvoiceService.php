@@ -10,7 +10,7 @@ use Core\Mod\Commerce\Models\Invoice;
 use Core\Mod\Commerce\Models\InvoiceItem;
 use Core\Mod\Commerce\Models\Order;
 use Core\Mod\Commerce\Models\Payment;
-use Core\Mod\Tenant\Models\Workspace;
+use Core\Tenant\Models\Workspace;
 
 /**
  * Invoice generation and management service.

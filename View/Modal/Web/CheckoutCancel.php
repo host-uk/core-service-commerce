@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Core\Mod\Commerce\Models\Order;
-use Core\Mod\Tenant\Models\User;
+use Core\Tenant\Models\User;
 
 #[Layout('shared::layouts.checkout')]
 class CheckoutCancel extends Component

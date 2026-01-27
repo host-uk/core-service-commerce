@@ -2,7 +2,7 @@
 
 namespace Core\Mod\Commerce\Models;
 
-use Core\Mod\Tenant\Models\Package;
+use Core\Tenant\Models\Package;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 

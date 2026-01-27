@@ -3,7 +3,7 @@
 namespace Core\Mod\Commerce\Mcp\Tools;
 
 use Core\Mod\Commerce\Models\Subscription;
-use Core\Mod\Tenant\Models\Workspace;
+use Core\Tenant\Models\Workspace;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;

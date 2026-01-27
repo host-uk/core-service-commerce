@@ -3,7 +3,7 @@
 namespace Core\Mod\Commerce\View\Modal\Web;
 
 use Core\Mod\Commerce\Services\CommerceService;
-use Core\Mod\Tenant\Models\Workspace;
+use Core\Tenant\Models\Workspace;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;

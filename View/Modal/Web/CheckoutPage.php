@@ -2,8 +2,8 @@
 
 namespace Core\Mod\Commerce\View\Modal\Web;
 
-use Core\Mod\Tenant\Models\Package;
-use Core\Mod\Tenant\Models\Workspace;
+use Core\Tenant\Models\Package;
+use Core\Tenant\Models\Workspace;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;

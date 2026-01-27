@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Core\Mod\Commerce\View\Modal\Admin;
 
 use Core\Mod\Commerce\Models\Order;
-use Core\Mod\Tenant\Models\Workspace;
+use Core\Tenant\Models\Workspace;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;

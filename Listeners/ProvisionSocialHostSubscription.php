@@ -7,9 +7,9 @@ use Core\Mod\Commerce\Events\SubscriptionCancelled;
 use Core\Mod\Commerce\Events\SubscriptionCreated;
 use Core\Mod\Commerce\Events\SubscriptionRenewed;
 use Core\Mod\Commerce\Events\SubscriptionUpdated;
-use Core\Mod\Tenant\Models\Package;
-use Core\Mod\Tenant\Models\WorkspacePackage;
-use Core\Mod\Tenant\Services\EntitlementService;
+use Core\Tenant\Models\Package;
+use Core\Tenant\Models\WorkspacePackage;
+use Core\Tenant\Services\EntitlementService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
 

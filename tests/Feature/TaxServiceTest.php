@@ -2,7 +2,7 @@
 
 use Core\Mod\Commerce\Models\TaxRate;
 use Core\Mod\Commerce\Services\TaxService;
-use Core\Mod\Tenant\Models\Workspace;
+use Core\Tenant\Models\Workspace;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 

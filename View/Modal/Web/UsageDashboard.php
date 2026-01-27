@@ -2,7 +2,7 @@
 
 namespace Core\Mod\Commerce\View\Modal\Web;
 
-use Core\Mod\Tenant\Models\Workspace;
+use Core\Tenant\Models\Workspace;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;

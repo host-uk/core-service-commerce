@@ -4,9 +4,9 @@ use Core\Mod\Commerce\Models\Coupon;
 use Core\Mod\Commerce\Models\CouponUsage;
 use Core\Mod\Commerce\Models\Order;
 use Core\Mod\Commerce\Services\CouponService;
-use Core\Mod\Tenant\Models\Package;
-use Core\Mod\Tenant\Models\User;
-use Core\Mod\Tenant\Models\Workspace;
+use Core\Tenant\Models\Package;
+use Core\Tenant\Models\User;
+use Core\Tenant\Models\Workspace;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 

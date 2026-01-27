@@ -10,8 +10,8 @@
 use Core\Mod\Commerce\Models\Order;
 use Core\Mod\Commerce\Models\Product;
 use Core\Mod\Commerce\Models\Subscription;
-use Core\Mod\Tenant\Models\User;
-use Core\Mod\Tenant\Models\Workspace;
+use Core\Tenant\Models\User;
+use Core\Tenant\Models\Workspace;
 
 describe('Commerce Admin Dashboard', function () {
     beforeEach(function () {

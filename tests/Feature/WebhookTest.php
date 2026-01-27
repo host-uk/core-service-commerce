@@ -15,11 +15,11 @@ use Core\Mod\Commerce\Services\InvoiceService;
 use Core\Mod\Commerce\Services\PaymentGateway\BTCPayGateway;
 use Core\Mod\Commerce\Services\PaymentGateway\StripeGateway;
 use Core\Mod\Commerce\Services\WebhookLogger;
-use Core\Mod\Tenant\Models\Package;
-use Core\Mod\Tenant\Models\User;
-use Core\Mod\Tenant\Models\Workspace;
-use Core\Mod\Tenant\Models\WorkspacePackage;
-use Core\Mod\Tenant\Services\EntitlementService;
+use Core\Tenant\Models\Package;
+use Core\Tenant\Models\User;
+use Core\Tenant\Models\Workspace;
+use Core\Tenant\Models\WorkspacePackage;
+use Core\Tenant\Services\EntitlementService;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 

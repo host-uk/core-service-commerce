@@ -6,9 +6,9 @@ namespace Core\Mod\Commerce\Jobs;
 
 use Core\Mod\Commerce\Events\SubscriptionRenewed;
 use Core\Mod\Commerce\Models\Subscription;
-use Core\Mod\Tenant\Models\EntitlementLog;
-use Core\Mod\Tenant\Models\WorkspacePackage;
-use Core\Mod\Tenant\Services\EntitlementService;
+use Core\Tenant\Models\EntitlementLog;
+use Core\Tenant\Models\WorkspacePackage;
+use Core\Tenant\Services\EntitlementService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;

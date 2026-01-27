@@ -2,9 +2,9 @@
 
 namespace Core\Mod\Commerce\Services;
 
-use Core\Mod\Tenant\Models\Package;
-use Core\Mod\Tenant\Models\Workspace;
-use Core\Mod\Tenant\Services\EntitlementService;
+use Core\Tenant\Models\Package;
+use Core\Tenant\Models\Workspace;
+use Core\Tenant\Services\EntitlementService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Core\Mod\Commerce\Contracts\Orderable;
@@ -114,7 +114,7 @@ class CommerceService
             $order = Order::create([
                 'orderable_type' => get_class($orderable),
                 'orderable_id' => $orderable->id,
-                'user_id' => $orderable instanceof \Core\Mod\Tenant\Models\User ? $orderable->id : null,
+                'user_id' => $orderable instanceof \Core\Tenant\Models\User ? $orderable->id : null,
                 'order_number' => Order::generateOrderNumber(),
                 'status' => 'pending',
                 'billing_cycle' => $billingCycle,
@@ -253,7 +253,7 @@ class CommerceService
             $order = Order::create([
                 'orderable_type' => get_class($orderable),
                 'orderable_id' => $orderable->id,
-                'user_id' => $orderable instanceof \Core\Mod\Tenant\Models\User ? $orderable->id : null,
+                'user_id' => $orderable instanceof \Core\Tenant\Models\User ? $orderable->id : null,
                 'order_number' => Order::generateOrderNumber(),
                 'status' => 'pending',
                 'billing_cycle' => 'onetime',
@@ -329,7 +329,7 @@ class CommerceService
             }
 
             // Provision boosts for user-level orders
-            if ($order->orderable instanceof \Core\Mod\Tenant\Models\User) {
+            if ($order->orderable instanceof \Core\Tenant\Models\User) {
                 foreach ($order->items as $item) {
                     if ($item->item_type === 'boost') {
                         $quantity = $item->metadata['quantity'] ?? $item->quantity ?? 1;
@@ -349,21 +349,21 @@ class CommerceService
     /**
      * Provision a boost for a user.
      */
-    public function provisionBoostForUser(\Core\Mod\Tenant\Models\User $user, string $featureCode, int $quantity = 1, array $metadata = []): \Core\Mod\Tenant\Models\Boost
+    public function provisionBoostForUser(\Core\Tenant\Models\User $user, string $featureCode, int $quantity = 1, array $metadata = []): \Core\Tenant\Models\Boost
     {
         // Use ADD_LIMIT for quantity-based boosts, ENABLE for boolean boosts
         $boostType = $quantity > 1 || $this->isQuantityBasedFeature($featureCode)
-            ? \Core\Mod\Tenant\Models\Boost::BOOST_TYPE_ADD_LIMIT
-            : \Core\Mod\Tenant\Models\Boost::BOOST_TYPE_ENABLE;
+            ? \Core\Tenant\Models\Boost::BOOST_TYPE_ADD_LIMIT
+            : \Core\Tenant\Models\Boost::BOOST_TYPE_ENABLE;
 
-        return \Core\Mod\Tenant\Models\Boost::create([
+        return \Core\Tenant\Models\Boost::create([
             'user_id' => $user->id,
             'workspace_id' => null,
             'feature_code' => $featureCode,
             'boost_type' => $boostType,
-            'duration_type' => \Core\Mod\Tenant\Models\Boost::DURATION_PERMANENT,
-            'limit_value' => $boostType === \Core\Mod\Tenant\Models\Boost::BOOST_TYPE_ADD_LIMIT ? $quantity : null,
-            'status' => \Core\Mod\Tenant\Models\Boost::STATUS_ACTIVE,
+            'duration_type' => \Core\Tenant\Models\Boost::DURATION_PERMANENT,
+            'limit_value' => $boostType === \Core\Tenant\Models\Boost::BOOST_TYPE_ADD_LIMIT ? $quantity : null,
+            'status' => \Core\Tenant\Models\Boost::STATUS_ACTIVE,
             'starts_at' => now(),
             'metadata' => $metadata,
         ]);

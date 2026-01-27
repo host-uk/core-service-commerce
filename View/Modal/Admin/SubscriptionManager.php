@@ -6,7 +6,7 @@ namespace Core\Mod\Commerce\View\Modal\Admin;
 
 use Core\Mod\Commerce\Models\Subscription;
 use Core\Mod\Commerce\Services\SubscriptionService;
-use Core\Mod\Tenant\Models\Workspace;
+use Core\Tenant\Models\Workspace;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;

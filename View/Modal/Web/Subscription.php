@@ -6,7 +6,7 @@ use Core\Mod\Commerce\Models\Subscription as SubscriptionModel;
 use Core\Mod\Commerce\Notifications\SubscriptionCancelled;
 use Core\Mod\Commerce\Services\CommerceService;
 use Core\Mod\Commerce\Services\SubscriptionService;
-use Core\Mod\Tenant\Models\Workspace;
+use Core\Tenant\Models\Workspace;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
@@ -123,7 +123,7 @@ class Subscription extends Component
 
             // Notify user
             $user = Auth::user();
-            if ($user instanceof \Core\Mod\Tenant\Models\User) {
+            if ($user instanceof \Core\Tenant\Models\User) {
                 $user->notify(new SubscriptionCancelled($this->activeSubscription));
             }
 

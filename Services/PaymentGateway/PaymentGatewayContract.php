@@ -7,7 +7,7 @@ use Core\Mod\Commerce\Models\Payment;
 use Core\Mod\Commerce\Models\PaymentMethod;
 use Core\Mod\Commerce\Models\Refund;
 use Core\Mod\Commerce\Models\Subscription;
-use Core\Mod\Tenant\Models\Workspace;
+use Core\Tenant\Models\Workspace;
 
 /**
  * Contract for payment gateway implementations.

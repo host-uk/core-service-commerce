@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Core\Mod\Commerce\Models;
 
-use Core\Mod\Tenant\Models\User;
+use Core\Tenant\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\LogOptions;

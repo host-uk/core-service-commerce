@@ -12,7 +12,7 @@ use Core\Mod\Commerce\Notifications\PaymentFailed;
 use Core\Mod\Commerce\Notifications\PaymentRetry;
 use Core\Mod\Commerce\Notifications\SubscriptionCancelled;
 use Core\Mod\Commerce\Notifications\SubscriptionPaused;
-use Core\Mod\Tenant\Services\EntitlementService;
+use Core\Tenant\Services\EntitlementService;
 
 /**
  * Dunning service for failed payment recovery.

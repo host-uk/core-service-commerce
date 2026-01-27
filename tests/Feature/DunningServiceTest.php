@@ -10,10 +10,10 @@ use Core\Mod\Commerce\Notifications\PaymentFailed;
 use Core\Mod\Commerce\Notifications\SubscriptionCancelled;
 use Core\Mod\Commerce\Notifications\SubscriptionPaused;
 use Core\Mod\Commerce\Services\DunningService;
-use Core\Mod\Tenant\Models\Package;
-use Core\Mod\Tenant\Models\User;
-use Core\Mod\Tenant\Models\Workspace;
-use Core\Mod\Tenant\Models\WorkspacePackage;
+use Core\Tenant\Models\Package;
+use Core\Tenant\Models\User;
+use Core\Tenant\Models\Workspace;
+use Core\Tenant\Models\WorkspacePackage;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 

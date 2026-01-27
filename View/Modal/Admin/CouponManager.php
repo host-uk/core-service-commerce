@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Core\Mod\Commerce\View\Modal\Admin;
 
-use Core\Mod\Tenant\Models\Package;
+use Core\Tenant\Models\Package;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;

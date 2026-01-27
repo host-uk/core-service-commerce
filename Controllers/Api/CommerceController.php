@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Core\Mod\Commerce\Controllers\Api;
 
 use Core\Front\Controller;
-use Core\Mod\Tenant\Models\Package;
-use Core\Mod\Tenant\Models\Workspace;
+use Core\Tenant\Models\Package;
+use Core\Tenant\Models\Workspace;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -38,7 +38,7 @@ class CommerceController extends Controller
     {
         $user = Auth::user();
 
-        if (! $user instanceof \Core\Mod\Tenant\Models\User) {
+        if (! $user instanceof \Core\Tenant\Models\User) {
             return null;
         }
 
@@ -200,7 +200,7 @@ class CommerceController extends Controller
             return response()->json(['error' => 'No workspace found'], 404);
         }
 
-        $entitlements = app(\Core\Mod\Tenant\Services\EntitlementService::class);
+        $entitlements = app(\Core\Tenant\Services\EntitlementService::class);
         $summary = $entitlements->getUsageSummary($workspace);
 
         return response()->json([

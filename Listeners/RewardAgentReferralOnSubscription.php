@@ -6,7 +6,7 @@ namespace Core\Mod\Commerce\Listeners;
 
 use Core\Mod\Commerce\Events\SubscriptionCreated;
 use Mod\Trees\Models\TreePlanting;
-use Core\Mod\Tenant\Models\AgentReferralBonus;
+use Core\Tenant\Models\AgentReferralBonus;
 use Illuminate\Support\Facades\Log;
 
 /**

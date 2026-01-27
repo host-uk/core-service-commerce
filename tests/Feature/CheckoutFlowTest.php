@@ -6,10 +6,10 @@ use Core\Mod\Commerce\Models\Order;
 use Core\Mod\Commerce\Models\Payment;
 use Core\Mod\Commerce\Services\CommerceService;
 use Core\Mod\Commerce\Services\PaymentGateway\PaymentGatewayContract;
-use Core\Mod\Tenant\Models\Package;
-use Core\Mod\Tenant\Models\User;
-use Core\Mod\Tenant\Models\Workspace;
-use Core\Mod\Tenant\Models\WorkspacePackage;
+use Core\Tenant\Models\Package;
+use Core\Tenant\Models\User;
+use Core\Tenant\Models\Workspace;
+use Core\Tenant\Models\WorkspacePackage;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 

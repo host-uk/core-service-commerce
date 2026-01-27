@@ -6,11 +6,11 @@ use Core\Mod\Commerce\Exceptions\PauseLimitExceededException;
 use Core\Mod\Commerce\Models\Subscription;
 use Core\Mod\Commerce\Services\ProrationResult;
 use Core\Mod\Commerce\Services\SubscriptionService;
-use Core\Mod\Tenant\Models\Feature;
-use Core\Mod\Tenant\Models\Package;
-use Core\Mod\Tenant\Models\User;
-use Core\Mod\Tenant\Models\Workspace;
-use Core\Mod\Tenant\Models\WorkspacePackage;
+use Core\Tenant\Models\Feature;
+use Core\Tenant\Models\Package;
+use Core\Tenant\Models\User;
+use Core\Tenant\Models\Workspace;
+use Core\Tenant\Models\WorkspacePackage;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 

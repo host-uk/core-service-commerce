@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Core\Mod\Commerce\Contracts\Orderable;
 use Core\Mod\Commerce\Models\TaxRate;
-use Core\Mod\Tenant\Models\Workspace;
+use Core\Tenant\Models\Workspace;
 
 /**
  * Tax calculation service.

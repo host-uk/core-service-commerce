@@ -2,8 +2,8 @@
 
 namespace Core\Mod\Commerce\Services;
 
-use Core\Mod\Tenant\Models\Package;
-use Core\Mod\Tenant\Models\Workspace;
+use Core\Tenant\Models\Package;
+use Core\Tenant\Models\Workspace;
 use Illuminate\Database\Eloquent\Model;
 use Core\Mod\Commerce\Contracts\Orderable;
 use Core\Mod\Commerce\Data\CouponValidationResult;

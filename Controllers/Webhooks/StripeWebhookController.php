@@ -4,8 +4,8 @@ namespace Core\Mod\Commerce\Controllers\Webhooks;
 
 use Carbon\Carbon;
 use Core\Front\Controller;
-use Core\Mod\Tenant\Models\Workspace;
-use Core\Mod\Tenant\Services\EntitlementService;
+use Core\Tenant\Models\Workspace;
+use Core\Tenant\Services\EntitlementService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
