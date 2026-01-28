@@ -63,15 +63,14 @@ return new class extends Migration
 
             // Billing status
             $table->boolean('billed')->default(false);
-            $table->foreignId('invoice_item_id')->nullable()
-                ->constrained('invoice_items')->nullOnDelete();
+            $table->unsignedBigInteger('invoice_item_id')->nullable();
 
             $table->json('metadata')->nullable();
             $table->timestamps();
 
             $table->unique(['subscription_id', 'meter_id', 'period_start'], 'sub_meter_period_unique');
-            $table->index(['subscription_id', 'period_start', 'period_end']);
-            $table->index(['billed', 'period_end']);
+            $table->index(['subscription_id', 'period_start', 'period_end'], 'sub_usage_period_idx');
+            $table->index(['billed', 'period_end'], 'sub_usage_billed_idx');
 
             // Add foreign key if subscriptions table exists
             if (Schema::hasTable('subscriptions')) {
