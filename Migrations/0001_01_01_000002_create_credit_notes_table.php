@@ -24,8 +24,9 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
 
             // Source references (optional - not all credits come from orders/refunds)
-            $table->foreignId('order_id')->nullable()->constrained('orders')->nullOnDelete();
-            $table->foreignId('refund_id')->nullable()->constrained('refunds')->nullOnDelete();
+            // Foreign keys added when orders/refunds tables exist
+            $table->unsignedBigInteger('order_id')->nullable();
+            $table->unsignedBigInteger('refund_id')->nullable();
 
             // Credit details
             $table->string('reference_number', 32)->unique();
@@ -39,7 +40,7 @@ return new class extends Migration
 
             // Tracking
             $table->decimal('amount_used', 10, 2)->default(0);
-            $table->foreignId('applied_to_order_id')->nullable()->constrained('orders')->nullOnDelete();
+            $table->unsignedBigInteger('applied_to_order_id')->nullable();
             $table->timestamp('issued_at')->nullable();
             $table->timestamp('applied_at')->nullable();
             $table->timestamp('voided_at')->nullable();
