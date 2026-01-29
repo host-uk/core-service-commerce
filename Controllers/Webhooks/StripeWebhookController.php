@@ -21,6 +21,7 @@ use Core\Mod\Commerce\Notifications\OrderConfirmation;
 use Core\Mod\Commerce\Notifications\PaymentFailed;
 use Core\Mod\Commerce\Notifications\SubscriptionCancelled;
 use Core\Mod\Commerce\Services\CommerceService;
+use Core\Mod\Commerce\Services\FraudService;
 use Core\Mod\Commerce\Services\InvoiceService;
 use Core\Mod\Commerce\Services\PaymentGateway\StripeGateway;
 use Core\Mod\Commerce\Services\WebhookLogger;
@@ -44,6 +45,7 @@ class StripeWebhookController extends Controller
         protected InvoiceService $invoiceService,
         protected EntitlementService $entitlements,
         protected WebhookLogger $webhookLogger,
+        protected FraudService $fraudService,
     ) {}
 
     public function handle(Request $request): Response
@@ -92,6 +94,8 @@ class StripeWebhookController extends Controller
                     'payment_method.detached' => $this->handlePaymentMethodDetached($event),
                     'payment_method.updated' => $this->handlePaymentMethodUpdated($event),
                     'setup_intent.succeeded' => $this->handleSetupIntentSucceeded($event),
+                    'charge.succeeded' => $this->handleChargeSucceeded($event),
+                    'payment_intent.succeeded' => $this->handlePaymentIntentSucceeded($event),
                     default => $this->handleUnknownEvent($event),
                 };
             });
@@ -539,5 +543,92 @@ class StripeWebhookController extends Controller
         if ($owner) {
             $owner->notify(new OrderConfirmation($order));
         }
+    }
+
+    /**
+     * Handle charge.succeeded event for Stripe Radar fraud scoring.
+     *
+     * Processes the Radar outcome from successful charges to update payment
+     * records with fraud assessment data.
+     */
+    protected function handleChargeSucceeded(array $event): Response
+    {
+        $charge = $event['raw']['data']['object'];
+        $paymentIntentId = $charge['payment_intent'] ?? null;
+
+        // Extract Stripe Radar outcome if present
+        $outcome = $charge['outcome'] ?? null;
+        if (! $outcome) {
+            return response('OK (no Radar data)', 200);
+        }
+
+        // Find the payment record
+        $payment = null;
+        if ($paymentIntentId) {
+            $payment = Payment::where('gateway', 'stripe')
+                ->where('gateway_payment_id', $paymentIntentId)
+                ->first();
+        }
+
+        if (! $payment) {
+            // Try finding by charge ID
+            $payment = Payment::where('gateway', 'stripe')
+                ->where('gateway_payment_id', $charge['id'])
+                ->first();
+        }
+
+        if ($payment) {
+            // Process Stripe Radar outcome and store on payment
+            $this->fraudService->processStripeRadarOutcome($payment, $outcome);
+
+            Log::info('Stripe Radar outcome processed', [
+                'payment_id' => $payment->id,
+                'risk_level' => $outcome['risk_level'] ?? 'unknown',
+                'risk_score' => $outcome['risk_score'] ?? null,
+            ]);
+        }
+
+        return response('OK', 200);
+    }
+
+    /**
+     * Handle payment_intent.succeeded event for Stripe Radar fraud scoring.
+     *
+     * This is an alternative entry point for Radar data when charge events
+     * are not received.
+     */
+    protected function handlePaymentIntentSucceeded(array $event): Response
+    {
+        $paymentIntent = $event['raw']['data']['object'];
+
+        // Check for charges array (contains Radar outcome)
+        $charges = $paymentIntent['charges']['data'] ?? [];
+        if (empty($charges)) {
+            return response('OK (no charges)', 200);
+        }
+
+        // Process the first charge's Radar outcome
+        $charge = $charges[0];
+        $outcome = $charge['outcome'] ?? null;
+        if (! $outcome) {
+            return response('OK (no Radar data)', 200);
+        }
+
+        // Find the payment record
+        $payment = Payment::where('gateway', 'stripe')
+            ->where('gateway_payment_id', $paymentIntent['id'])
+            ->first();
+
+        if ($payment) {
+            // Process Stripe Radar outcome
+            $this->fraudService->processStripeRadarOutcome($payment, $outcome);
+
+            Log::info('Stripe Radar outcome processed (from payment_intent)', [
+                'payment_id' => $payment->id,
+                'risk_level' => $outcome['risk_level'] ?? 'unknown',
+            ]);
+        }
+
+        return response('OK', 200);
     }
 }

@@ -1,13 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core\Mod\Commerce\Services;
 
-use Core\Tenant\Models\Package;
-use Core\Tenant\Models\Workspace;
-use Core\Tenant\Services\EntitlementService;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB;
 use Core\Mod\Commerce\Contracts\Orderable;
+use Core\Mod\Commerce\Data\FraudAssessment;
+use Core\Mod\Commerce\Exceptions\CheckoutRateLimitException;
+use Core\Mod\Commerce\Exceptions\FraudBlockedException;
 use Core\Mod\Commerce\Models\Coupon;
 use Core\Mod\Commerce\Models\Invoice;
 use Core\Mod\Commerce\Models\Order;
@@ -15,6 +15,13 @@ use Core\Mod\Commerce\Models\OrderItem;
 use Core\Mod\Commerce\Models\Payment;
 use Core\Mod\Commerce\Models\Subscription;
 use Core\Mod\Commerce\Services\PaymentGateway\PaymentGatewayContract;
+use Core\Tenant\Models\Package;
+use Core\Tenant\Models\Workspace;
+use Core\Tenant\Services\EntitlementService;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Main commerce orchestration service.
@@ -29,6 +36,8 @@ class CommerceService
         protected CouponService $couponService,
         protected InvoiceService $invoiceService,
         protected CurrencyService $currencyService,
+        protected CheckoutRateLimiter $rateLimiter,
+        protected FraudService $fraudService,
     ) {}
 
     /**
@@ -169,14 +178,31 @@ class CommerceService
     /**
      * Create a checkout session for an order.
      *
-     * @return array{order: Order, session_id: string, checkout_url: string}
+     * Applies rate limiting and fraud detection to prevent card testing attacks
+     * and suspicious transactions. Rate limiting is enforced at the service level
+     * as a defence-in-depth measure, even if the caller (e.g., Livewire component)
+     * also applies rate limiting.
+     *
+     * @param  Request|null  $request  The HTTP request for rate limiting (auto-resolved if null)
+     *
+     * @throws CheckoutRateLimitException When rate limit is exceeded
+     * @throws FraudBlockedException When order is blocked due to high fraud risk
+     *
+     * @return array{order: Order, session_id: string, checkout_url: string, fraud_assessment?: FraudAssessment}
      */
     public function createCheckout(
         Order $order,
         ?string $gateway = null,
         ?string $successUrl = null,
-        ?string $cancelUrl = null
+        ?string $cancelUrl = null,
+        ?Request $request = null
     ): array {
+        // Apply rate limiting to prevent card testing attacks
+        $this->enforceCheckoutRateLimit($order, $request);
+
+        // Perform pre-checkout fraud assessment (velocity checks, geo-anomaly detection)
+        $fraudAssessment = $this->assessOrderFraud($order);
+
         $gateway = $gateway ?? $this->getDefaultGateway();
         $successUrl = $successUrl ?? route('checkout.success', ['order' => $order->order_number]);
         $cancelUrl = $cancelUrl ?? route('checkout.cancel', ['order' => $order->order_number]);
@@ -186,10 +212,16 @@ class CommerceService
             $this->ensureCustomer($order->orderable, $gateway);
         }
 
-        // Update order with gateway info
+        // Update order with gateway info and fraud assessment
+        $metadata = $order->metadata ?? [];
+        if ($fraudAssessment->wasAssessed()) {
+            $metadata['fraud_assessment'] = $fraudAssessment->toArray();
+        }
+
         $order->update([
             'gateway' => $gateway,
             'status' => 'processing',
+            'metadata' => $metadata,
         ]);
 
         // Create checkout session
@@ -199,11 +231,88 @@ class CommerceService
             'gateway_session_id' => $session['session_id'],
         ]);
 
-        return [
+        $result = [
             'order' => $order->fresh(),
             'session_id' => $session['session_id'],
             'checkout_url' => $session['checkout_url'],
         ];
+
+        // Include fraud assessment in response for logging/monitoring
+        if ($fraudAssessment->wasAssessed()) {
+            $result['fraud_assessment'] = $fraudAssessment;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Assess order for fraud before checkout.
+     *
+     * Performs velocity checks and geo-anomaly detection. If the fraud risk
+     * is too high, the order will be blocked and an exception thrown.
+     *
+     * @throws FraudBlockedException When order should be blocked due to fraud risk
+     */
+    protected function assessOrderFraud(Order $order): FraudAssessment
+    {
+        $assessment = $this->fraudService->assessOrder($order);
+
+        // Block the order if fraud risk is too high
+        if ($assessment->shouldBlock) {
+            Log::warning('Order blocked due to fraud risk', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'risk_level' => $assessment->riskLevel,
+                'signals' => $assessment->signals,
+            ]);
+
+            // Mark order as failed with fraud reason
+            $order->markAsFailed('Blocked due to suspected fraud');
+
+            throw new FraudBlockedException(
+                'This order could not be processed. Please contact support if you believe this is an error.',
+                $assessment
+            );
+        }
+
+        // Log elevated risk orders for review
+        if ($assessment->shouldReview) {
+            Log::info('Order flagged for fraud review', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'risk_level' => $assessment->riskLevel,
+                'signals' => $assessment->signals,
+            ]);
+        }
+
+        return $assessment;
+    }
+
+    /**
+     * Enforce checkout rate limiting.
+     *
+     * @throws CheckoutRateLimitException When rate limit is exceeded
+     */
+    protected function enforceCheckoutRateLimit(Order $order, ?Request $request = null): void
+    {
+        $request = $request ?? request();
+
+        // Extract identifiers from order
+        $workspaceId = $order->orderable instanceof Workspace ? $order->orderable->id : null;
+        $userId = $order->user_id;
+
+        // Check rate limit
+        if ($this->rateLimiter->tooManyAttempts($workspaceId, $userId, $request)) {
+            $availableIn = $this->rateLimiter->availableIn($workspaceId, $userId, $request);
+
+            throw new CheckoutRateLimitException(
+                'Too many checkout attempts. Please wait before trying again.',
+                $availableIn
+            );
+        }
+
+        // Increment the rate limiter counter
+        $this->rateLimiter->increment($workspaceId, $userId, $request);
     }
 
     /**

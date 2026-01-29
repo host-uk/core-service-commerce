@@ -22,13 +22,13 @@ Production-quality task list for the commerce module.
 
 - [x] **Add currency mismatch detection** - ~~If gateway returns different currency than order, this could result in incorrect fulfillment.~~ **FIXED:** The `verifyPaymentAmount()` method now validates currency matches. Orders with currency mismatch are marked as failed with "Currency mismatch: received X, expected Y" message.
 
-- [ ] **Rate limit checkout session creation** - `CheckoutRateLimiter` exists but isn't applied in `CommerceService::createCheckout()`. Card testing attacks could abuse this endpoint.
+- [x] **Rate limit checkout session creation** - ~~`CheckoutRateLimiter` exists but isn't applied in `CommerceService::createCheckout()`. Card testing attacks could abuse this endpoint.~~ **FIXED:** `CheckoutRateLimiter` is already integrated into `CommerceService::createCheckout()` via the `enforceCheckoutRateLimit()` method. Limits are 5 attempts per 15-minute window per workspace/user/IP. `CheckoutRateLimitException` thrown when exceeded.
 
-- [ ] **Add fraud scoring integration** - No fraud detection for suspicious patterns (multiple failed payments, velocity checks, geo-anomalies). Consider Stripe Radar integration for Stripe gateway.
+- [x] **Add fraud scoring integration** - ~~No fraud detection for suspicious patterns (multiple failed payments, velocity checks, geo-anomalies). Consider Stripe Radar integration for Stripe gateway.~~ **FIXED (2026-01-29):** Integrated `FraudService` into checkout flow. Pre-checkout assessment performs velocity checks (orders per IP/email, failed payments per workspace) and geo-anomaly detection (country mismatch, high-risk countries). Post-payment Stripe Radar outcomes are processed via `charge.succeeded` and `payment_intent.succeeded` webhooks. High-risk orders are blocked with `FraudBlockedException`. Elevated-risk orders are flagged for review. Fraud assessments stored in order/payment metadata.
 
 ### Input Validation
 
-- [ ] **Sanitise user-provided coupon codes** - `CouponService::validateByCode()` uses raw input. Add length limits, character validation, and normalisation (uppercase) before DB query.
+- [x] **Sanitise user-provided coupon codes** - ~~`CouponService::validateByCode()` uses raw input. Add length limits, character validation, and normalisation (uppercase) before DB query.~~ **FIXED (2026-01-29):** Added `sanitiseCode()` method to `CouponService` that enforces: 1) Length limits (3-50 characters) 2) Character validation (alphanumeric, hyphens, underscores only) 3) Uppercase normalisation. Both `findByCode()` and `validateByCode()` now sanitise input before database queries. Invalid format codes return null/invalid result early without hitting the database.
 
 - [ ] **Validate billing address components** - `Order::create()` accepts `billing_address` array without validating structure. Malformed addresses could cause PDF generation issues or tax calculation failures.
 
@@ -190,6 +190,23 @@ Production-quality task list for the commerce module.
 ---
 
 ## Completed
+
+### 2026-01-29 - Payment Security & Input Validation (P1-040, P1-041, P1-042)
+
+- **Rate limit checkout session creation (P1-040)** - Verified `CheckoutRateLimiter` integration in `CommerceService::createCheckout()`. Rate limits of 5 attempts per 15-minute window protect against card testing attacks.
+
+- **Add fraud scoring integration (P1-041)** - Integrated `FraudService` into checkout and webhook flows:
+  - Pre-checkout: Velocity checks (IP/email order limits, failed payment tracking), geo-anomaly detection (country mismatch, high-risk countries)
+  - Post-payment: Stripe Radar outcome processing via `charge.succeeded` and `payment_intent.succeeded` webhooks
+  - Risk levels: normal, elevated (review), highest (block)
+  - New `FraudBlockedException` for blocked orders
+  - Fraud assessments stored in order/payment metadata for audit
+
+- **Sanitise coupon codes (P1-042)** - Added `CouponService::sanitiseCode()` with:
+  - Length limits: 3-50 characters
+  - Character validation: alphanumeric, hyphens, underscores only
+  - Uppercase normalisation
+  - Early rejection of invalid formats before database queries
 
 ### 2026-01-29 - Webhook Security Fixes
 

@@ -1,15 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core\Mod\Commerce\Services;
 
-use Core\Tenant\Models\Package;
-use Core\Tenant\Models\Workspace;
-use Illuminate\Database\Eloquent\Model;
 use Core\Mod\Commerce\Contracts\Orderable;
 use Core\Mod\Commerce\Data\CouponValidationResult;
 use Core\Mod\Commerce\Models\Coupon;
 use Core\Mod\Commerce\Models\CouponUsage;
 use Core\Mod\Commerce\Models\Order;
+use Core\Tenant\Models\Package;
+use Core\Tenant\Models\Workspace;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * Coupon validation and application service.
@@ -17,11 +19,81 @@ use Core\Mod\Commerce\Models\Order;
 class CouponService
 {
     /**
+     * Maximum allowed length for coupon codes.
+     *
+     * Prevents excessive database queries and potential abuse.
+     */
+    private const MAX_CODE_LENGTH = 50;
+
+    /**
+     * Minimum allowed length for coupon codes.
+     *
+     * Prevents single-character brute force attempts.
+     */
+    private const MIN_CODE_LENGTH = 3;
+
+    /**
+     * Pattern for valid coupon code characters.
+     *
+     * Allows alphanumeric characters, hyphens, and underscores.
+     */
+    private const VALID_CODE_PATTERN = '/^[A-Z0-9\-_]+$/';
+
+    /**
      * Find a coupon by code.
+     *
+     * Sanitises the code before querying to prevent abuse.
      */
     public function findByCode(string $code): ?Coupon
     {
-        return Coupon::byCode($code)->first();
+        $sanitised = $this->sanitiseCode($code);
+
+        if ($sanitised === null) {
+            return null;
+        }
+
+        return Coupon::byCode($sanitised)->first();
+    }
+
+    /**
+     * Sanitise and validate a coupon code.
+     *
+     * Performs the following transformations and validations:
+     * - Trims whitespace
+     * - Converts to uppercase (normalisation)
+     * - Enforces length limits (3-50 characters)
+     * - Validates allowed characters (alphanumeric, hyphens, underscores)
+     *
+     * @param  string  $code  The raw coupon code input
+     * @return string|null The sanitised code, or null if invalid
+     */
+    public function sanitiseCode(string $code): ?string
+    {
+        // Trim whitespace and convert to uppercase
+        $sanitised = strtoupper(trim($code));
+
+        // Check length constraints
+        $length = strlen($sanitised);
+        if ($length < self::MIN_CODE_LENGTH || $length > self::MAX_CODE_LENGTH) {
+            return null;
+        }
+
+        // Validate allowed characters (alphanumeric, hyphens, underscores only)
+        if (! preg_match(self::VALID_CODE_PATTERN, $sanitised)) {
+            return null;
+        }
+
+        return $sanitised;
+    }
+
+    /**
+     * Check if a coupon code format is valid without looking it up.
+     *
+     * Useful for early validation before database queries.
+     */
+    public function isValidCodeFormat(string $code): bool
+    {
+        return $this->sanitiseCode($code) !== null;
     }
 
     /**
@@ -74,10 +146,20 @@ class CouponService
 
     /**
      * Validate a coupon by code.
+     *
+     * Sanitises the code before validation. Returns an invalid result
+     * if the code format is invalid or the coupon doesn't exist.
      */
     public function validateByCode(string $code, Workspace $workspace, ?Package $package = null): CouponValidationResult
     {
-        $coupon = $this->findByCode($code);
+        // Sanitise the code first - reject invalid formats early
+        $sanitised = $this->sanitiseCode($code);
+
+        if ($sanitised === null) {
+            return CouponValidationResult::invalid('Invalid coupon code format');
+        }
+
+        $coupon = Coupon::byCode($sanitised)->first();
 
         if (! $coupon) {
             return CouponValidationResult::invalid('Invalid coupon code');
