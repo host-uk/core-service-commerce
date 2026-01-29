@@ -114,6 +114,66 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Webhook Settings
+    |--------------------------------------------------------------------------
+    |
+    | Rate limiting and security for webhook endpoints.
+    |
+    */
+
+    'webhooks' => [
+        // IP-based rate limiting for webhook endpoints
+        'rate_limits' => [
+            // Default requests per minute for unknown IPs
+            'default' => env('COMMERCE_WEBHOOK_RATE_LIMIT', 60),
+
+            // Requests per minute for trusted gateway IPs
+            'trusted' => env('COMMERCE_WEBHOOK_RATE_LIMIT_TRUSTED', 300),
+
+            // Gateway-specific limits (optional, overrides above)
+            'stripe' => [
+                'default' => env('COMMERCE_WEBHOOK_RATE_LIMIT_STRIPE', 60),
+                'trusted' => env('COMMERCE_WEBHOOK_RATE_LIMIT_STRIPE_TRUSTED', 300),
+            ],
+            'btcpay' => [
+                'default' => env('COMMERCE_WEBHOOK_RATE_LIMIT_BTCPAY', 60),
+                'trusted' => env('COMMERCE_WEBHOOK_RATE_LIMIT_BTCPAY_TRUSTED', 300),
+            ],
+        ],
+
+        // Trusted IP addresses/CIDR ranges for payment gateways
+        // These IPs get higher rate limits
+        'trusted_ips' => [
+            // Global trusted IPs (applies to all gateways)
+            'global' => [],
+
+            // Stripe webhook IPs (from https://docs.stripe.com/ips)
+            // Note: Stripe recommends signature verification over IP allowlisting
+            // These are provided as an additional layer of defence
+            'stripe' => [
+                // Stripe webhook source IPs (as of 2024)
+                '3.18.12.63',
+                '3.130.192.231',
+                '13.235.14.237',
+                '13.235.122.149',
+                '18.211.135.69',
+                '35.154.171.200',
+                '52.15.183.38',
+                '54.88.130.119',
+                '54.88.130.237',
+                '54.187.174.169',
+                '54.187.205.235',
+                '54.187.216.72',
+            ],
+
+            // BTCPay Server IPs (configure based on your BTCPay instance)
+            // If self-hosted, add your server's IP here
+            'btcpay' => [],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Payment Gateways
     |--------------------------------------------------------------------------
     |

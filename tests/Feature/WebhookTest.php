@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Notification;
 use Core\Mod\Commerce\Controllers\Webhooks\BTCPayWebhookController;
 use Core\Mod\Commerce\Controllers\Webhooks\StripeWebhookController;
+use WebhookPayloadValidationException;
 use Core\Mod\Commerce\Models\Order;
 use Core\Mod\Commerce\Models\OrderItem;
 use Core\Mod\Commerce\Models\Payment;
@@ -20,6 +20,7 @@ use Core\Tenant\Models\User;
 use Core\Tenant\Models\Workspace;
 use Core\Tenant\Models\WorkspacePackage;
 use Core\Tenant\Services\EntitlementService;
+use Illuminate\Support\Facades\Notification;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
@@ -944,15 +945,12 @@ describe('BTCPayGateway webhook event parsing', function () {
             ->and($event['metadata'])->toBe(['order_id' => 1]);
     });
 
-    it('handles invalid JSON gracefully', function () {
+    it('throws exception for invalid JSON', function () {
         $gateway = new BTCPayGateway;
         $payload = 'invalid json {{{';
 
-        $event = $gateway->parseWebhookEvent($payload);
-
-        expect($event['type'])->toBe('unknown')
-            ->and($event['id'])->toBeNull()
-            ->and($event['raw'])->toBe([]);
+        expect(fn () => $gateway->parseWebhookEvent($payload))
+            ->toThrow(WebhookPayloadValidationException::class);
     });
 
     it('maps event types correctly', function () {
@@ -969,7 +967,10 @@ describe('BTCPayGateway webhook event parsing', function () {
         ];
 
         foreach ($testCases as $case) {
-            $event = $gateway->parseWebhookEvent(json_encode(['type' => $case['type']]));
+            $event = $gateway->parseWebhookEvent(json_encode([
+                'type' => $case['type'],
+                'invoiceId' => 'test_123',
+            ]));
             expect($event['type'])->toBe($case['expected'], "Failed for type: {$case['type']}");
         }
     });
@@ -989,10 +990,340 @@ describe('BTCPayGateway webhook event parsing', function () {
         foreach ($testCases as $case) {
             $event = $gateway->parseWebhookEvent(json_encode([
                 'type' => 'InvoiceSettled',
+                'invoiceId' => 'test_123',
                 'status' => $case['status'],
             ]));
             expect($event['status'])->toBe($case['expected'], "Failed for status: {$case['status']}");
         }
+    });
+});
+
+// ============================================================================
+// BTCPay Webhook Payload Validation Tests (P2-076)
+// ============================================================================
+
+describe('BTCPayGateway webhook payload validation', function () {
+    it('throws exception for missing type field', function () {
+        $gateway = new BTCPayGateway;
+        $payload = json_encode([
+            'invoiceId' => 'inv_123',
+            'status' => 'Settled',
+        ]);
+
+        expect(fn () => $gateway->parseWebhookEvent($payload))
+            ->toThrow(WebhookPayloadValidationException::class, 'Missing required fields: type');
+    });
+
+    it('throws exception for missing invoice identifier', function () {
+        $gateway = new BTCPayGateway;
+        $payload = json_encode([
+            'type' => 'InvoiceSettled',
+            'status' => 'Settled',
+        ]);
+
+        expect(fn () => $gateway->parseWebhookEvent($payload))
+            ->toThrow(WebhookPayloadValidationException::class, 'Missing required fields: invoiceId or id');
+    });
+
+    it('accepts payload with id instead of invoiceId', function () {
+        $gateway = new BTCPayGateway;
+        $payload = json_encode([
+            'type' => 'InvoiceSettled',
+            'id' => 'inv_123',
+            'status' => 'Settled',
+        ]);
+
+        $event = $gateway->parseWebhookEvent($payload);
+
+        expect($event['id'])->toBe('inv_123');
+    });
+
+    it('throws exception when type is not a string', function () {
+        $gateway = new BTCPayGateway;
+        $payload = json_encode([
+            'type' => 123, // Should be string
+            'invoiceId' => 'inv_123',
+        ]);
+
+        expect(fn () => $gateway->parseWebhookEvent($payload))
+            ->toThrow(WebhookPayloadValidationException::class, 'Invalid field types');
+    });
+
+    it('throws exception when invoiceId is not a string', function () {
+        $gateway = new BTCPayGateway;
+        $payload = json_encode([
+            'type' => 'InvoiceSettled',
+            'invoiceId' => 12345, // Should be string
+        ]);
+
+        expect(fn () => $gateway->parseWebhookEvent($payload))
+            ->toThrow(WebhookPayloadValidationException::class, 'Invalid field types');
+    });
+
+    it('throws exception when metadata is not an object', function () {
+        $gateway = new BTCPayGateway;
+        $payload = json_encode([
+            'type' => 'InvoiceSettled',
+            'invoiceId' => 'inv_123',
+            'metadata' => 'not_an_object', // Should be array/object
+        ]);
+
+        expect(fn () => $gateway->parseWebhookEvent($payload))
+            ->toThrow(WebhookPayloadValidationException::class, 'Invalid field types');
+    });
+
+    it('throws exception when amount is not numeric', function () {
+        $gateway = new BTCPayGateway;
+        $payload = json_encode([
+            'type' => 'InvoiceSettled',
+            'invoiceId' => 'inv_123',
+            'amount' => 'not_a_number',
+        ]);
+
+        expect(fn () => $gateway->parseWebhookEvent($payload))
+            ->toThrow(WebhookPayloadValidationException::class, 'Invalid field types');
+    });
+
+    it('throws exception when type is empty string', function () {
+        $gateway = new BTCPayGateway;
+        $payload = json_encode([
+            'type' => '',
+            'invoiceId' => 'inv_123',
+        ]);
+
+        expect(fn () => $gateway->parseWebhookEvent($payload))
+            ->toThrow(WebhookPayloadValidationException::class, 'must not be empty');
+    });
+
+    it('throws exception when type exceeds maximum length', function () {
+        $gateway = new BTCPayGateway;
+        $payload = json_encode([
+            'type' => str_repeat('a', 101), // Exceeds 100 char limit
+            'invoiceId' => 'inv_123',
+        ]);
+
+        expect(fn () => $gateway->parseWebhookEvent($payload))
+            ->toThrow(WebhookPayloadValidationException::class, 'exceeds maximum length');
+    });
+
+    it('throws exception when invoiceId exceeds maximum length', function () {
+        $gateway = new BTCPayGateway;
+        $payload = json_encode([
+            'type' => 'InvoiceSettled',
+            'invoiceId' => str_repeat('a', 256), // Exceeds 255 char limit
+        ]);
+
+        expect(fn () => $gateway->parseWebhookEvent($payload))
+            ->toThrow(WebhookPayloadValidationException::class, 'exceeds maximum length');
+    });
+
+    it('throws exception for invalid currency code', function () {
+        $gateway = new BTCPayGateway;
+        $payload = json_encode([
+            'type' => 'InvoiceSettled',
+            'invoiceId' => 'inv_123',
+            'currency' => 'INVALID', // Should be 3 letters
+        ]);
+
+        expect(fn () => $gateway->parseWebhookEvent($payload))
+            ->toThrow(WebhookPayloadValidationException::class, 'valid 3-letter currency code');
+    });
+
+    it('throws exception for negative amount', function () {
+        $gateway = new BTCPayGateway;
+        $payload = json_encode([
+            'type' => 'InvoiceSettled',
+            'invoiceId' => 'inv_123',
+            'amount' => -10.50,
+        ]);
+
+        expect(fn () => $gateway->parseWebhookEvent($payload))
+            ->toThrow(WebhookPayloadValidationException::class, 'must not be negative');
+    });
+
+    it('accepts valid numeric string amount', function () {
+        $gateway = new BTCPayGateway;
+        $payload = json_encode([
+            'type' => 'InvoiceSettled',
+            'invoiceId' => 'inv_123',
+            'amount' => '58.80', // String numeric is valid
+        ]);
+
+        $event = $gateway->parseWebhookEvent($payload);
+
+        expect($event['id'])->toBe('inv_123');
+    });
+
+    it('accepts payload with valid currency code', function () {
+        $gateway = new BTCPayGateway;
+        $payload = json_encode([
+            'type' => 'InvoiceSettled',
+            'invoiceId' => 'inv_123',
+            'currency' => 'GBP',
+        ]);
+
+        $event = $gateway->parseWebhookEvent($payload);
+
+        expect($event['id'])->toBe('inv_123');
+    });
+
+    it('accepts payload with lowercase currency code', function () {
+        $gateway = new BTCPayGateway;
+        $payload = json_encode([
+            'type' => 'InvoiceSettled',
+            'invoiceId' => 'inv_123',
+            'currency' => 'gbp', // Should be normalised
+        ]);
+
+        $event = $gateway->parseWebhookEvent($payload);
+
+        expect($event['id'])->toBe('inv_123');
+    });
+
+    it('throws exception when payload is not an object', function () {
+        $gateway = new BTCPayGateway;
+        $payload = json_encode('just a string');
+
+        expect(fn () => $gateway->parseWebhookEvent($payload))
+            ->toThrow(WebhookPayloadValidationException::class, 'Payload must be an object');
+    });
+
+    it('throws exception when payload is a JSON array', function () {
+        $gateway = new BTCPayGateway;
+        $payload = json_encode(['value1', 'value2']); // Array, not object
+
+        // Note: json_decode with associative=true converts this to an indexed array,
+        // which is still an array. The validation should check for required fields.
+        expect(fn () => $gateway->parseWebhookEvent($payload))
+            ->toThrow(WebhookPayloadValidationException::class);
+    });
+});
+
+describe('BTCPayWebhookController payload validation integration', function () {
+    beforeEach(function () {
+        $this->order = Order::create([
+            'workspace_id' => $this->workspace->id,
+            'order_number' => 'ORD-VAL-001',
+            'gateway' => 'btcpay',
+            'gateway_session_id' => 'btc_invoice_val_123',
+            'subtotal' => 49.00,
+            'tax_amount' => 9.80,
+            'total' => 58.80,
+            'currency' => 'GBP',
+            'status' => 'pending',
+        ]);
+
+        OrderItem::create([
+            'order_id' => $this->order->id,
+            'name' => 'Test Product',
+            'quantity' => 1,
+            'unit_price' => 49.00,
+            'total' => 49.00,
+            'type' => 'product',
+        ]);
+    });
+
+    it('returns 400 for invalid JSON payload', function () {
+        $mockGateway = Mockery::mock(BTCPayGateway::class);
+        $mockGateway->shouldReceive('verifyWebhookSignature')->andReturn(true);
+        $mockGateway->shouldReceive('parseWebhookEvent')
+            ->andThrow(WebhookPayloadValidationException::invalidJson('btcpay', 'Syntax error'));
+
+        $mockCommerce = Mockery::mock(CommerceService::class);
+        $mockCommerce->shouldNotReceive('fulfillOrder');
+
+        $webhookLogger = new WebhookLogger;
+        $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
+
+        $request = new \Illuminate\Http\Request;
+        $request->headers->set('BTCPay-Sig', 'valid_signature');
+
+        $response = $controller->handle($request);
+
+        expect($response->getStatusCode())->toBe(400)
+            ->and($response->getContent())->toContain('Invalid payload');
+
+        // Verify failed validation was logged
+        $webhookEvent = WebhookEvent::forGateway('btcpay')
+            ->where('event_type', 'validation_failed')
+            ->first();
+        expect($webhookEvent)->not->toBeNull()
+            ->and($webhookEvent->status)->toBe(WebhookEvent::STATUS_FAILED);
+    });
+
+    it('returns 400 for payload missing required fields', function () {
+        $mockGateway = Mockery::mock(BTCPayGateway::class);
+        $mockGateway->shouldReceive('verifyWebhookSignature')->andReturn(true);
+        $mockGateway->shouldReceive('parseWebhookEvent')
+            ->andThrow(WebhookPayloadValidationException::missingFields('btcpay', ['type']));
+
+        $mockCommerce = Mockery::mock(CommerceService::class);
+        $webhookLogger = new WebhookLogger;
+
+        $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
+
+        $request = new \Illuminate\Http\Request;
+        $response = $controller->handle($request);
+
+        expect($response->getStatusCode())->toBe(400)
+            ->and($response->getContent())->toContain('Missing required fields');
+    });
+
+    it('returns 400 for payload with invalid field types', function () {
+        $mockGateway = Mockery::mock(BTCPayGateway::class);
+        $mockGateway->shouldReceive('verifyWebhookSignature')->andReturn(true);
+        $mockGateway->shouldReceive('parseWebhookEvent')
+            ->andThrow(WebhookPayloadValidationException::invalidFieldTypes('btcpay', [
+                'type' => ['expected' => 'string', 'actual' => 'integer'],
+            ]));
+
+        $mockCommerce = Mockery::mock(CommerceService::class);
+        $webhookLogger = new WebhookLogger;
+
+        $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
+
+        $request = new \Illuminate\Http\Request;
+        $response = $controller->handle($request);
+
+        expect($response->getStatusCode())->toBe(400)
+            ->and($response->getContent())->toContain('Invalid field types');
+    });
+
+    it('processes valid payload after validation passes', function () {
+        $mockGateway = Mockery::mock(BTCPayGateway::class);
+        $mockGateway->shouldReceive('verifyWebhookSignature')->andReturn(true);
+        $mockGateway->shouldReceive('parseWebhookEvent')->andReturn([
+            'type' => 'invoice.paid',
+            'id' => 'btc_invoice_val_123',
+            'status' => 'succeeded',
+            'metadata' => [],
+            'raw' => ['invoiceId' => 'btc_invoice_val_123'],
+        ]);
+        $mockGateway->shouldReceive('getCheckoutSession')->andReturn([
+            'id' => 'btc_invoice_val_123',
+            'status' => 'succeeded',
+            'amount' => 58.80,
+            'currency' => 'GBP',
+            'raw' => ['amount' => 58.80, 'currency' => 'GBP'],
+        ]);
+
+        $mockCommerce = Mockery::mock(CommerceService::class);
+        $mockCommerce->shouldReceive('fulfillOrder')->once();
+
+        $webhookLogger = new WebhookLogger;
+        $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
+
+        $request = new \Illuminate\Http\Request;
+        $response = $controller->handle($request);
+
+        expect($response->getStatusCode())->toBe(200);
+
+        // Verify webhook was processed successfully
+        $webhookEvent = WebhookEvent::forGateway('btcpay')
+            ->where('event_type', 'invoice.paid')
+            ->first();
+        expect($webhookEvent)->not->toBeNull()
+            ->and($webhookEvent->status)->toBe(WebhookEvent::STATUS_PROCESSED);
     });
 });
 

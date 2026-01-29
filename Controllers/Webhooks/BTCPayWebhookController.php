@@ -5,10 +5,7 @@ declare(strict_types=1);
 namespace Core\Mod\Commerce\Controllers\Webhooks;
 
 use Core\Front\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Core\Mod\Commerce\Exceptions\WebhookPayloadValidationException;
 use Core\Mod\Commerce\Models\Order;
 use Core\Mod\Commerce\Models\Payment;
 use Core\Mod\Commerce\Models\WebhookEvent;
@@ -16,6 +13,11 @@ use Core\Mod\Commerce\Notifications\OrderConfirmation;
 use Core\Mod\Commerce\Services\CommerceService;
 use Core\Mod\Commerce\Services\PaymentGateway\BTCPayGateway;
 use Core\Mod\Commerce\Services\WebhookLogger;
+use Core\Mod\Commerce\Services\WebhookRateLimiter;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Handle BTCPay Server webhooks.
@@ -34,10 +36,29 @@ class BTCPayWebhookController extends Controller
         protected BTCPayGateway $gateway,
         protected CommerceService $commerce,
         protected WebhookLogger $webhookLogger,
+        protected WebhookRateLimiter $rateLimiter,
     ) {}
 
     public function handle(Request $request): Response
     {
+        // Check IP-based rate limiting before processing
+        if ($this->rateLimiter->tooManyAttempts($request, 'btcpay')) {
+            $retryAfter = $this->rateLimiter->availableIn($request, 'btcpay');
+
+            Log::warning('BTCPay webhook rate limit exceeded', [
+                'ip' => $request->ip(),
+                'retry_after' => $retryAfter,
+            ]);
+
+            return response('Too Many Requests', 429)
+                ->header('Retry-After', (string) $retryAfter)
+                ->header('X-RateLimit-Remaining', '0')
+                ->header('X-RateLimit-Reset', (string) (time() + $retryAfter));
+        }
+
+        // Increment rate limit counter
+        $this->rateLimiter->increment($request, 'btcpay');
+
         $payload = $request->getContent();
         $signature = $request->header('BTCPay-Sig');
 
@@ -48,7 +69,28 @@ class BTCPayWebhookController extends Controller
             return response('Invalid signature', 401);
         }
 
-        $event = $this->gateway->parseWebhookEvent($payload);
+        // Parse and validate the webhook payload
+        try {
+            $event = $this->gateway->parseWebhookEvent($payload);
+        } catch (WebhookPayloadValidationException $e) {
+            Log::warning('BTCPay webhook payload validation failed', [
+                'error' => $e->getMessage(),
+                'errors' => $e->getErrors(),
+                'ip' => $request->ip(),
+            ]);
+
+            // Log the failed validation attempt for security auditing
+            $this->webhookLogger->start(
+                gateway: 'btcpay',
+                eventType: 'validation_failed',
+                payload: $payload,
+                eventId: null,
+                request: $request
+            );
+            $this->webhookLogger->fail($e->getMessage(), 400);
+
+            return response('Invalid payload: '.$e->getMessage(), 400);
+        }
 
         // Log the webhook event for audit trail (also handles deduplication via unique constraint)
         $webhookEvent = $this->webhookLogger->startFromParsedEvent('btcpay', $event, $payload, $request);

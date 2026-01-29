@@ -1,15 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core\Mod\Commerce\Services\PaymentGateway;
 
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
+use Core\Mod\Commerce\Exceptions\WebhookPayloadValidationException;
 use Core\Mod\Commerce\Models\Order;
 use Core\Mod\Commerce\Models\Payment;
 use Core\Mod\Commerce\Models\PaymentMethod;
 use Core\Mod\Commerce\Models\Subscription;
 use Core\Tenant\Models\Workspace;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 /**
  * BTCPay Server payment gateway implementation.
@@ -344,23 +347,45 @@ class BTCPayGateway implements PaymentGatewayContract
         return true;
     }
 
+    /**
+     * Parse and validate a webhook event payload.
+     *
+     * @throws WebhookPayloadValidationException When the payload is malformed or invalid
+     */
     public function parseWebhookEvent(string $payload): array
     {
+        // Step 1: Validate JSON structure
         $data = json_decode($payload, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
+            $error = json_last_error_msg();
+
             Log::warning('BTCPay webhook: Invalid JSON payload', [
-                'error' => json_last_error_msg(),
+                'error' => $error,
             ]);
 
-            return [
-                'type' => 'unknown',
-                'id' => null,
-                'status' => 'unknown',
-                'metadata' => [],
-                'raw' => [],
-            ];
+            throw WebhookPayloadValidationException::invalidJson('btcpay', $error);
         }
+
+        // Step 2: Validate payload is an array/object
+        if (! is_array($data)) {
+            Log::warning('BTCPay webhook: Payload must be an object', [
+                'type' => gettype($data),
+            ]);
+
+            throw WebhookPayloadValidationException::invalidFieldTypes('btcpay', [
+                'payload' => ['expected' => 'object', 'actual' => gettype($data)],
+            ]);
+        }
+
+        // Step 3: Validate required fields exist
+        $this->validateRequiredFields($data);
+
+        // Step 4: Validate field types
+        $this->validateFieldTypes($data);
+
+        // Step 5: Validate field values
+        $this->validateFieldValues($data);
 
         $type = $data['type'] ?? 'unknown';
         $invoiceId = $data['invoiceId'] ?? $data['id'] ?? null;
@@ -372,6 +397,181 @@ class BTCPayGateway implements PaymentGatewayContract
             'metadata' => $data['metadata'] ?? [],
             'raw' => $data,
         ];
+    }
+
+    /**
+     * Validate that required fields are present in the webhook payload.
+     *
+     * BTCPay webhook payloads must contain at minimum:
+     * - type: The event type (e.g., InvoiceSettled)
+     * - invoiceId OR id: The invoice identifier
+     *
+     * @param  array<string, mixed>  $data
+     *
+     * @throws WebhookPayloadValidationException
+     */
+    protected function validateRequiredFields(array $data): void
+    {
+        $missingFields = [];
+
+        // 'type' is required for all webhook events
+        if (! array_key_exists('type', $data) || $data['type'] === null) {
+            $missingFields[] = 'type';
+        }
+
+        // Either 'invoiceId' or 'id' must be present
+        $hasInvoiceId = array_key_exists('invoiceId', $data) && $data['invoiceId'] !== null;
+        $hasId = array_key_exists('id', $data) && $data['id'] !== null;
+
+        if (! $hasInvoiceId && ! $hasId) {
+            $missingFields[] = 'invoiceId or id';
+        }
+
+        if (! empty($missingFields)) {
+            Log::warning('BTCPay webhook: Missing required fields', [
+                'missing_fields' => $missingFields,
+            ]);
+
+            throw WebhookPayloadValidationException::missingFields('btcpay', $missingFields);
+        }
+    }
+
+    /**
+     * Validate that field types match expected schema.
+     *
+     * @param  array<string, mixed>  $data
+     *
+     * @throws WebhookPayloadValidationException
+     */
+    protected function validateFieldTypes(array $data): void
+    {
+        $typeErrors = [];
+
+        // 'type' must be a string
+        if (isset($data['type']) && ! is_string($data['type'])) {
+            $typeErrors['type'] = [
+                'expected' => 'string',
+                'actual' => gettype($data['type']),
+            ];
+        }
+
+        // 'invoiceId' must be a string if present
+        if (isset($data['invoiceId']) && ! is_string($data['invoiceId'])) {
+            $typeErrors['invoiceId'] = [
+                'expected' => 'string',
+                'actual' => gettype($data['invoiceId']),
+            ];
+        }
+
+        // 'id' must be a string if present
+        if (isset($data['id']) && ! is_string($data['id'])) {
+            $typeErrors['id'] = [
+                'expected' => 'string',
+                'actual' => gettype($data['id']),
+            ];
+        }
+
+        // 'status' must be a string if present
+        if (isset($data['status']) && ! is_string($data['status'])) {
+            $typeErrors['status'] = [
+                'expected' => 'string',
+                'actual' => gettype($data['status']),
+            ];
+        }
+
+        // 'metadata' must be an array/object if present
+        if (isset($data['metadata']) && ! is_array($data['metadata'])) {
+            $typeErrors['metadata'] = [
+                'expected' => 'object',
+                'actual' => gettype($data['metadata']),
+            ];
+        }
+
+        // 'amount' must be numeric if present (string or number)
+        if (isset($data['amount'])) {
+            if (! is_numeric($data['amount'])) {
+                $typeErrors['amount'] = [
+                    'expected' => 'numeric',
+                    'actual' => gettype($data['amount']),
+                ];
+            }
+        }
+
+        // 'currency' must be a string if present
+        if (isset($data['currency']) && ! is_string($data['currency'])) {
+            $typeErrors['currency'] = [
+                'expected' => 'string',
+                'actual' => gettype($data['currency']),
+            ];
+        }
+
+        if (! empty($typeErrors)) {
+            Log::warning('BTCPay webhook: Invalid field types', [
+                'type_errors' => $typeErrors,
+            ]);
+
+            throw WebhookPayloadValidationException::invalidFieldTypes('btcpay', $typeErrors);
+        }
+    }
+
+    /**
+     * Validate that field values are within acceptable bounds.
+     *
+     * @param  array<string, mixed>  $data
+     *
+     * @throws WebhookPayloadValidationException
+     */
+    protected function validateFieldValues(array $data): void
+    {
+        $valueErrors = [];
+
+        // 'type' must not be empty
+        if (isset($data['type']) && trim($data['type']) === '') {
+            $valueErrors['type'] = 'must not be empty';
+        }
+
+        // 'type' must be a reasonable length (protection against oversized payloads)
+        if (isset($data['type']) && strlen($data['type']) > 100) {
+            $valueErrors['type'] = 'exceeds maximum length of 100 characters';
+        }
+
+        // 'invoiceId' must not exceed reasonable length
+        if (isset($data['invoiceId']) && strlen($data['invoiceId']) > 255) {
+            $valueErrors['invoiceId'] = 'exceeds maximum length of 255 characters';
+        }
+
+        // 'id' must not exceed reasonable length
+        if (isset($data['id']) && strlen($data['id']) > 255) {
+            $valueErrors['id'] = 'exceeds maximum length of 255 characters';
+        }
+
+        // 'currency' must be a valid 3-letter code if present
+        if (isset($data['currency'])) {
+            $currency = strtoupper(trim($data['currency']));
+            if (strlen($currency) !== 3 || ! ctype_alpha($currency)) {
+                $valueErrors['currency'] = 'must be a valid 3-letter currency code';
+            }
+        }
+
+        // 'amount' must be non-negative if present
+        if (isset($data['amount']) && is_numeric($data['amount'])) {
+            if ((float) $data['amount'] < 0) {
+                $valueErrors['amount'] = 'must not be negative';
+            }
+        }
+
+        // 'status' must not exceed reasonable length
+        if (isset($data['status']) && strlen($data['status']) > 50) {
+            $valueErrors['status'] = 'exceeds maximum length of 50 characters';
+        }
+
+        if (! empty($valueErrors)) {
+            Log::warning('BTCPay webhook: Invalid field values', [
+                'value_errors' => $valueErrors,
+            ]);
+
+            throw WebhookPayloadValidationException::invalidFieldValues('btcpay', $valueErrors);
+        }
     }
 
     // Tax

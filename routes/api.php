@@ -18,10 +18,15 @@ use Core\Mod\Commerce\Controllers\Webhooks\StripeWebhookController;
 */
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Payment Webhooks (no auth - uses signature verification)
+// Payment Webhooks (no auth - uses signature verification + IP-based rate limiting)
 // ─────────────────────────────────────────────────────────────────────────────
 
-Route::middleware('throttle:120,1')->prefix('webhooks')->group(function () {
+Route::prefix('webhooks')->group(function () {
+    // Rate limiting is handled per-IP in the controllers via WebhookRateLimiter
+    // This provides better protection than global throttle middleware:
+    // - Per-IP limits (60/min default, 300/min for trusted gateway IPs)
+    // - Different limits per gateway
+    // - Proper 429 responses with Retry-After headers
     Route::post('/btcpay', [BTCPayWebhookController::class, 'handle'])
         ->name('api.webhook.btcpay');
     Route::post('/stripe', [StripeWebhookController::class, 'handle'])

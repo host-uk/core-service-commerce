@@ -10,9 +10,9 @@ Production-quality task list for the commerce module.
 
 - [x] **Add idempotency handling for BTCPay webhooks** - ~~Currently `BTCPayWebhookController::handleSettled()` checks `$order->isPaid()` but doesn't record processed webhook IDs. A replay attack could trigger duplicate processing if timing is right.~~ **FIXED:** Added `isAlreadyProcessed()` method in both `BTCPayWebhookController` and `StripeWebhookController`. Webhook events are now stored in `webhook_events` table with unique constraint on `(gateway, event_id)`. Duplicate events are rejected early with "Already processed (duplicate)" response. Migration: `2026_01_29_000001_create_webhook_events_table.php`.
 
-- [ ] **Add rate limiting per IP for webhook endpoints** - Current throttle (120/min) is global. A malicious actor could exhaust the limit for legitimate webhooks. Add per-IP limiting with higher limits for known gateway IPs.
+- [x] **Add rate limiting per IP for webhook endpoints** - ~~Current throttle (120/min) is global. A malicious actor could exhaust the limit for legitimate webhooks. Add per-IP limiting with higher limits for known gateway IPs.~~ **FIXED (2026-01-29):** Added `WebhookRateLimiter` service with per-IP rate limiting. Default: 60 requests/minute for unknown IPs, 300/minute for trusted gateway IPs. Supports CIDR ranges for IP allowlisting. Both `StripeWebhookController` and `BTCPayWebhookController` now check rate limits before processing, returning 429 with `Retry-After` header when exceeded. Configuration in `config.php` under `webhooks.rate_limits` and `webhooks.trusted_ips`.
 
-- [ ] **Validate BTCPay webhook payload structure** - `parseWebhookEvent()` assumes JSON structure without schema validation. Malformed payloads could cause unexpected behaviour. Add JSON schema validation or strict key checking.
+- [x] **Validate BTCPay webhook payload structure** - ~~`parseWebhookEvent()` assumes JSON structure without schema validation. Malformed payloads could cause unexpected behaviour.~~ **FIXED (P2-076):** Added comprehensive payload validation to `BTCPayGateway::parseWebhookEvent()`. Validates: 1) JSON syntax 2) Required fields (type, invoiceId/id) 3) Field types (string, numeric, object) 4) Field values (non-empty, length limits, currency format, non-negative amounts). Invalid payloads throw `WebhookPayloadValidationException` with detailed error info. Controller returns 400 with error message and logs validation failures for security auditing.
 
 - [x] **Add webhook replay protection window** - ~~Neither gateway stores processed webhook event IDs with timestamp-based expiry.~~ **FIXED:** Webhook events are now stored permanently in `webhook_events` table with `processed_at` timestamp. Both controllers check for existing processed events before reprocessing. The unique constraint prevents race conditions at the database level.
 
@@ -209,6 +209,14 @@ Production-quality task list for the commerce module.
   - Early rejection of invalid formats before database queries
 
 ### 2026-01-29 - Webhook Security Fixes
+
+- **Add rate limiting per IP for webhook endpoints (P2-075)** - Added `WebhookRateLimiter` service providing IP-based rate limiting for webhook endpoints:
+  - Default: 60 requests/minute per IP, 300/minute for trusted gateway IPs
+  - Per-gateway configurable limits via `config.php` (`commerce.webhooks.rate_limits`)
+  - Trusted IP allowlist with CIDR range support (`commerce.webhooks.trusted_ips`)
+  - Proper 429 responses with `Retry-After` and `X-RateLimit-*` headers
+  - Replaces global `throttle:120,1` middleware with granular per-IP controls
+  - Prevents rate limit exhaustion attacks against legitimate payment webhooks
 
 - **Add idempotency handling for BTCPay/Stripe webhooks** - Added `isAlreadyProcessed()` check to both webhook controllers. Created `webhook_events` table with unique constraint on `(gateway, event_id)` for deduplication.
 

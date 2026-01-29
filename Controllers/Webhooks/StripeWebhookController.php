@@ -25,6 +25,7 @@ use Core\Mod\Commerce\Services\FraudService;
 use Core\Mod\Commerce\Services\InvoiceService;
 use Core\Mod\Commerce\Services\PaymentGateway\StripeGateway;
 use Core\Mod\Commerce\Services\WebhookLogger;
+use Core\Mod\Commerce\Services\WebhookRateLimiter;
 
 /**
  * Handle Stripe webhooks.
@@ -46,10 +47,29 @@ class StripeWebhookController extends Controller
         protected EntitlementService $entitlements,
         protected WebhookLogger $webhookLogger,
         protected FraudService $fraudService,
+        protected WebhookRateLimiter $rateLimiter,
     ) {}
 
     public function handle(Request $request): Response
     {
+        // Check IP-based rate limiting before processing
+        if ($this->rateLimiter->tooManyAttempts($request, 'stripe')) {
+            $retryAfter = $this->rateLimiter->availableIn($request, 'stripe');
+
+            Log::warning('Stripe webhook rate limit exceeded', [
+                'ip' => $request->ip(),
+                'retry_after' => $retryAfter,
+            ]);
+
+            return response('Too Many Requests', 429)
+                ->header('Retry-After', (string) $retryAfter)
+                ->header('X-RateLimit-Remaining', '0')
+                ->header('X-RateLimit-Reset', (string) (time() + $retryAfter));
+        }
+
+        // Increment rate limit counter
+        $this->rateLimiter->increment($request, 'stripe');
+
         $payload = $request->getContent();
         $signature = $request->header('Stripe-Signature');
 

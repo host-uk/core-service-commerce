@@ -76,6 +76,7 @@ class Boot extends ServiceProvider
         $this->app->singleton(\Core\Mod\Commerce\Services\ReferralService::class);
         $this->app->singleton(\Core\Mod\Commerce\Services\FraudService::class);
         $this->app->singleton(\Core\Mod\Commerce\Services\CheckoutRateLimiter::class);
+        $this->app->singleton(\Core\Mod\Commerce\Services\WebhookRateLimiter::class);
 
         // Payment Gateways
         $this->app->singleton('commerce.gateway.btcpay', function ($app) {
