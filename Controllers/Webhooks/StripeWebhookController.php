@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core\Mod\Commerce\Controllers\Webhooks;
 
 use Carbon\Carbon;
@@ -14,6 +16,7 @@ use Core\Mod\Commerce\Models\Order;
 use Core\Mod\Commerce\Models\Payment;
 use Core\Mod\Commerce\Models\PaymentMethod;
 use Core\Mod\Commerce\Models\Subscription;
+use Core\Mod\Commerce\Models\WebhookEvent;
 use Core\Mod\Commerce\Notifications\OrderConfirmation;
 use Core\Mod\Commerce\Notifications\PaymentFailed;
 use Core\Mod\Commerce\Notifications\SubscriptionCancelled;
@@ -57,8 +60,18 @@ class StripeWebhookController extends Controller
 
         $event = $this->gateway->parseWebhookEvent($payload);
 
-        // Log the webhook event for audit trail
-        $this->webhookLogger->startFromParsedEvent('stripe', $event, $payload, $request);
+        // Log the webhook event for audit trail (also handles deduplication via unique constraint)
+        $webhookEvent = $this->webhookLogger->startFromParsedEvent('stripe', $event, $payload, $request);
+
+        // Idempotency check: if this event was already processed, return success without reprocessing
+        if ($this->isAlreadyProcessed($webhookEvent, $event)) {
+            Log::info('Stripe webhook already processed (idempotency check)', [
+                'type' => $event['type'],
+                'id' => $event['id'],
+            ]);
+
+            return response('Already processed (duplicate)', 200);
+        }
 
         Log::info('Stripe webhook received', [
             'type' => $event['type'],
@@ -96,6 +109,41 @@ class StripeWebhookController extends Controller
 
             return response('Processing error', 500);
         }
+    }
+
+    /**
+     * Check if the webhook event has already been processed.
+     *
+     * This provides idempotency protection against replay attacks and
+     * duplicate webhook deliveries from Stripe.
+     */
+    protected function isAlreadyProcessed(WebhookEvent $webhookEvent, array $event): bool
+    {
+        // If no event ID, we can't deduplicate
+        if (empty($event['id'])) {
+            return false;
+        }
+
+        // If the webhook event we just created has a different ID than the one
+        // that already existed in the database, it means this is a duplicate
+        $existingEvent = WebhookEvent::where('gateway', 'stripe')
+            ->where('event_id', $event['id'])
+            ->where('id', '!=', $webhookEvent->id)
+            ->whereIn('status', [WebhookEvent::STATUS_PROCESSED, WebhookEvent::STATUS_SKIPPED])
+            ->first();
+
+        if ($existingEvent) {
+            $this->webhookLogger->skip('Duplicate event (already processed)');
+
+            return true;
+        }
+
+        // Also check if the current event was already processed (fetched from DB due to duplicate insert)
+        if ($webhookEvent->isProcessed() || $webhookEvent->isSkipped()) {
+            return true;
+        }
+
+        return false;
     }
 
     protected function handleUnknownEvent(array $event): Response

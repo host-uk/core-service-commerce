@@ -996,6 +996,417 @@ describe('BTCPayGateway webhook event parsing', function () {
     });
 });
 
+// ============================================================================
+// Security Tests - Idempotency and Amount Verification
+// ============================================================================
+
+describe('Webhook Idempotency (Replay Attack Protection)', function () {
+    describe('BTCPay idempotency', function () {
+        beforeEach(function () {
+            $this->order = Order::create([
+                'workspace_id' => $this->workspace->id,
+                'order_number' => 'ORD-IDEM-BTC-001',
+                'gateway' => 'btcpay',
+                'gateway_session_id' => 'btc_invoice_idem_123',
+                'subtotal' => 49.00,
+                'tax_amount' => 9.80,
+                'total' => 58.80,
+                'currency' => 'GBP',
+                'status' => 'pending',
+            ]);
+
+            OrderItem::create([
+                'order_id' => $this->order->id,
+                'name' => 'Test Product',
+                'quantity' => 1,
+                'unit_price' => 49.00,
+                'total' => 49.00,
+                'type' => 'product',
+            ]);
+        });
+
+        it('rejects duplicate webhook events (replay attack protection)', function () {
+            // First webhook - should process successfully
+            $eventId = 'btc_event_unique_123';
+
+            // Pre-create a processed webhook event to simulate already processed
+            WebhookEvent::create([
+                'gateway' => 'btcpay',
+                'event_id' => $eventId,
+                'event_type' => 'invoice.paid',
+                'payload' => '{}',
+                'status' => WebhookEvent::STATUS_PROCESSED,
+                'received_at' => now()->subMinutes(5),
+                'processed_at' => now()->subMinutes(5),
+            ]);
+
+            $mockGateway = Mockery::mock(BTCPayGateway::class);
+            $mockGateway->shouldReceive('verifyWebhookSignature')->andReturn(true);
+            $mockGateway->shouldReceive('parseWebhookEvent')->andReturn([
+                'type' => 'invoice.paid',
+                'id' => $eventId,
+                'status' => 'succeeded',
+                'metadata' => [],
+                'raw' => [],
+            ]);
+
+            $mockCommerce = Mockery::mock(CommerceService::class);
+            // Should NOT receive fulfillOrder because this is a duplicate
+            $mockCommerce->shouldNotReceive('fulfillOrder');
+
+            $webhookLogger = new WebhookLogger;
+            $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
+
+            $request = new \Illuminate\Http\Request;
+            $response = $controller->handle($request);
+
+            expect($response->getStatusCode())->toBe(200)
+                ->and($response->getContent())->toBe('Already processed (duplicate)');
+        });
+
+        it('processes first webhook and rejects subsequent duplicates', function () {
+            $eventId = 'btc_event_first_' . uniqid();
+
+            $mockGateway = Mockery::mock(BTCPayGateway::class);
+            $mockGateway->shouldReceive('verifyWebhookSignature')->andReturn(true);
+            $mockGateway->shouldReceive('parseWebhookEvent')->andReturn([
+                'type' => 'invoice.paid',
+                'id' => $eventId,
+                'status' => 'succeeded',
+                'metadata' => [],
+                'raw' => ['invoiceId' => 'btc_invoice_idem_123'],
+            ]);
+            $mockGateway->shouldReceive('getCheckoutSession')->once()->andReturn([
+                'id' => 'btc_invoice_idem_123',
+                'status' => 'succeeded',
+                'amount' => 58.80,
+                'currency' => 'GBP',
+                'raw' => ['amount' => 58.80, 'currency' => 'GBP'],
+            ]);
+
+            $mockCommerce = Mockery::mock(CommerceService::class);
+            // First call should process
+            $mockCommerce->shouldReceive('fulfillOrder')->once();
+
+            $webhookLogger = new WebhookLogger;
+            $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
+
+            // First request - should process
+            $request1 = new \Illuminate\Http\Request;
+            $response1 = $controller->handle($request1);
+            expect($response1->getStatusCode())->toBe(200);
+
+            // Verify webhook event was logged
+            $webhookEvent = WebhookEvent::where('gateway', 'btcpay')
+                ->where('event_id', $eventId)
+                ->first();
+            expect($webhookEvent)->not->toBeNull()
+                ->and($webhookEvent->status)->toBe(WebhookEvent::STATUS_PROCESSED);
+
+            // Second request with same event ID - should be rejected as duplicate
+            $webhookLogger2 = new WebhookLogger;
+            $controller2 = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger2);
+            $request2 = new \Illuminate\Http\Request;
+            $response2 = $controller2->handle($request2);
+
+            expect($response2->getStatusCode())->toBe(200)
+                ->and($response2->getContent())->toBe('Already processed (duplicate)');
+
+            // Verify order was only fulfilled once (payment count check)
+            $paymentCount = Payment::where('order_id', $this->order->id)->count();
+            expect($paymentCount)->toBe(1);
+        });
+    });
+
+    describe('Stripe idempotency', function () {
+        beforeEach(function () {
+            $this->order = Order::create([
+                'workspace_id' => $this->workspace->id,
+                'order_number' => 'ORD-IDEM-STRIPE-001',
+                'gateway' => 'stripe',
+                'gateway_session_id' => 'cs_idem_123',
+                'subtotal' => 49.00,
+                'tax_amount' => 9.80,
+                'total' => 58.80,
+                'currency' => 'GBP',
+                'status' => 'pending',
+            ]);
+
+            OrderItem::create([
+                'order_id' => $this->order->id,
+                'name' => 'Test Product',
+                'quantity' => 1,
+                'unit_price' => 49.00,
+                'total' => 49.00,
+                'type' => 'product',
+            ]);
+        });
+
+        it('rejects duplicate Stripe webhook events', function () {
+            $eventId = 'evt_stripe_unique_123';
+
+            // Pre-create a processed webhook event
+            WebhookEvent::create([
+                'gateway' => 'stripe',
+                'event_id' => $eventId,
+                'event_type' => 'checkout.session.completed',
+                'payload' => '{}',
+                'status' => WebhookEvent::STATUS_PROCESSED,
+                'received_at' => now()->subMinutes(5),
+                'processed_at' => now()->subMinutes(5),
+            ]);
+
+            $mockGateway = Mockery::mock(StripeGateway::class);
+            $mockGateway->shouldReceive('verifyWebhookSignature')->andReturn(true);
+            $mockGateway->shouldReceive('parseWebhookEvent')->andReturn([
+                'type' => 'checkout.session.completed',
+                'id' => $eventId,
+                'raw' => [
+                    'data' => [
+                        'object' => [
+                            'id' => 'cs_idem_123',
+                            'metadata' => ['order_id' => $this->order->id],
+                        ],
+                    ],
+                ],
+            ]);
+
+            $mockCommerce = Mockery::mock(CommerceService::class);
+            $mockCommerce->shouldNotReceive('fulfillOrder');
+
+            $mockInvoice = Mockery::mock(InvoiceService::class);
+            $mockEntitlements = Mockery::mock(EntitlementService::class);
+            $webhookLogger = new WebhookLogger;
+
+            $controller = new StripeWebhookController(
+                $mockGateway,
+                $mockCommerce,
+                $mockInvoice,
+                $mockEntitlements,
+                $webhookLogger
+            );
+
+            $request = new \Illuminate\Http\Request;
+            $response = $controller->handle($request);
+
+            expect($response->getStatusCode())->toBe(200)
+                ->and($response->getContent())->toBe('Already processed (duplicate)');
+        });
+    });
+});
+
+describe('BTCPay Payment Amount Verification', function () {
+    beforeEach(function () {
+        $this->order = Order::create([
+            'workspace_id' => $this->workspace->id,
+            'order_number' => 'ORD-AMT-001',
+            'gateway' => 'btcpay',
+            'gateway_session_id' => 'btc_invoice_amt_123',
+            'subtotal' => 49.00,
+            'tax_amount' => 9.80,
+            'total' => 58.80,
+            'currency' => 'GBP',
+            'status' => 'pending',
+        ]);
+
+        OrderItem::create([
+            'order_id' => $this->order->id,
+            'name' => 'Test Product',
+            'quantity' => 1,
+            'unit_price' => 49.00,
+            'total' => 49.00,
+            'type' => 'product',
+        ]);
+    });
+
+    it('fulfils order when paid amount matches order total', function () {
+        $mockGateway = Mockery::mock(BTCPayGateway::class);
+        $mockGateway->shouldReceive('verifyWebhookSignature')->andReturn(true);
+        $mockGateway->shouldReceive('parseWebhookEvent')->andReturn([
+            'type' => 'invoice.paid',
+            'id' => 'btc_invoice_amt_123',
+            'status' => 'succeeded',
+            'metadata' => [],
+            'raw' => ['invoiceId' => 'btc_invoice_amt_123'],
+        ]);
+        $mockGateway->shouldReceive('getCheckoutSession')->andReturn([
+            'id' => 'btc_invoice_amt_123',
+            'status' => 'succeeded',
+            'amount' => 58.80,
+            'currency' => 'GBP',
+            'raw' => ['amount' => 58.80, 'currency' => 'GBP'],
+        ]);
+
+        $mockCommerce = Mockery::mock(CommerceService::class);
+        $mockCommerce->shouldReceive('fulfillOrder')->once();
+
+        $webhookLogger = new WebhookLogger;
+        $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
+
+        $request = new \Illuminate\Http\Request;
+        $response = $controller->handle($request);
+
+        expect($response->getStatusCode())->toBe(200);
+
+        $payment = Payment::where('order_id', $this->order->id)->first();
+        expect($payment)->not->toBeNull()
+            ->and($payment->status)->toBe('succeeded')
+            ->and((float) $payment->amount)->toBe(58.80);
+    });
+
+    it('rejects underpayment and marks order as failed', function () {
+        $mockGateway = Mockery::mock(BTCPayGateway::class);
+        $mockGateway->shouldReceive('verifyWebhookSignature')->andReturn(true);
+        $mockGateway->shouldReceive('parseWebhookEvent')->andReturn([
+            'type' => 'invoice.paid',
+            'id' => 'btc_invoice_underpaid',
+            'status' => 'succeeded',
+            'metadata' => [],
+            'raw' => ['invoiceId' => 'btc_invoice_amt_123'],
+        ]);
+        $mockGateway->shouldReceive('getCheckoutSession')->andReturn([
+            'id' => 'btc_invoice_amt_123',
+            'status' => 'succeeded',
+            'amount' => 30.00, // Underpaid: only 30 GBP instead of 58.80
+            'currency' => 'GBP',
+            'raw' => ['amount' => 30.00, 'currency' => 'GBP'],
+        ]);
+
+        $mockCommerce = Mockery::mock(CommerceService::class);
+        // Should NOT fulfil order due to underpayment
+        $mockCommerce->shouldNotReceive('fulfillOrder');
+
+        $webhookLogger = new WebhookLogger;
+        $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
+
+        $request = new \Illuminate\Http\Request;
+        $response = $controller->handle($request);
+
+        expect($response->getStatusCode())->toBe(200)
+            ->and($response->getContent())->toBe('Underpaid - order not fulfilled');
+
+        // Verify order was marked as failed
+        $this->order->refresh();
+        expect($this->order->status)->toBe('failed')
+            ->and($this->order->metadata['failure_reason'])->toContain('Underpaid');
+
+        // Verify partial payment was recorded for audit trail
+        $payment = Payment::where('order_id', $this->order->id)->first();
+        expect($payment)->not->toBeNull()
+            ->and($payment->status)->toBe('underpaid')
+            ->and((float) $payment->amount)->toBe(30.00);
+    });
+
+    it('fulfils order but logs overpayment', function () {
+        $mockGateway = Mockery::mock(BTCPayGateway::class);
+        $mockGateway->shouldReceive('verifyWebhookSignature')->andReturn(true);
+        $mockGateway->shouldReceive('parseWebhookEvent')->andReturn([
+            'type' => 'invoice.paid',
+            'id' => 'btc_invoice_overpaid',
+            'status' => 'succeeded',
+            'metadata' => [],
+            'raw' => ['invoiceId' => 'btc_invoice_amt_123'],
+        ]);
+        $mockGateway->shouldReceive('getCheckoutSession')->andReturn([
+            'id' => 'btc_invoice_amt_123',
+            'status' => 'succeeded',
+            'amount' => 100.00, // Overpaid: 100 GBP instead of 58.80
+            'currency' => 'GBP',
+            'raw' => ['amount' => 100.00, 'currency' => 'GBP'],
+        ]);
+
+        $mockCommerce = Mockery::mock(CommerceService::class);
+        // Should still fulfil order for overpayment
+        $mockCommerce->shouldReceive('fulfillOrder')->once();
+
+        $webhookLogger = new WebhookLogger;
+        $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
+
+        $request = new \Illuminate\Http\Request;
+        $response = $controller->handle($request);
+
+        expect($response->getStatusCode())->toBe(200);
+
+        // Order should be fulfilled (overpayment is accepted)
+        $payment = Payment::where('order_id', $this->order->id)->first();
+        expect($payment)->not->toBeNull()
+            ->and($payment->status)->toBe('succeeded')
+            ->and((float) $payment->amount)->toBe(100.00);
+    });
+
+    it('rejects payment with currency mismatch', function () {
+        $mockGateway = Mockery::mock(BTCPayGateway::class);
+        $mockGateway->shouldReceive('verifyWebhookSignature')->andReturn(true);
+        $mockGateway->shouldReceive('parseWebhookEvent')->andReturn([
+            'type' => 'invoice.paid',
+            'id' => 'btc_invoice_currency_mismatch',
+            'status' => 'succeeded',
+            'metadata' => [],
+            'raw' => ['invoiceId' => 'btc_invoice_amt_123'],
+        ]);
+        $mockGateway->shouldReceive('getCheckoutSession')->andReturn([
+            'id' => 'btc_invoice_amt_123',
+            'status' => 'succeeded',
+            'amount' => 58.80,
+            'currency' => 'USD', // Wrong currency - order is in GBP
+            'raw' => ['amount' => 58.80, 'currency' => 'USD'],
+        ]);
+
+        $mockCommerce = Mockery::mock(CommerceService::class);
+        // Should NOT fulfil order due to currency mismatch
+        $mockCommerce->shouldNotReceive('fulfillOrder');
+
+        $webhookLogger = new WebhookLogger;
+        $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
+
+        $request = new \Illuminate\Http\Request;
+        $response = $controller->handle($request);
+
+        expect($response->getStatusCode())->toBe(200)
+            ->and($response->getContent())->toBe('Currency mismatch - order not fulfilled');
+
+        // Verify order was marked as failed
+        $this->order->refresh();
+        expect($this->order->status)->toBe('failed')
+            ->and($this->order->metadata['failure_reason'])->toContain('Currency mismatch');
+    });
+
+    it('allows small floating point tolerance in amount comparison', function () {
+        $mockGateway = Mockery::mock(BTCPayGateway::class);
+        $mockGateway->shouldReceive('verifyWebhookSignature')->andReturn(true);
+        $mockGateway->shouldReceive('parseWebhookEvent')->andReturn([
+            'type' => 'invoice.paid',
+            'id' => 'btc_invoice_tolerance',
+            'status' => 'succeeded',
+            'metadata' => [],
+            'raw' => ['invoiceId' => 'btc_invoice_amt_123'],
+        ]);
+        $mockGateway->shouldReceive('getCheckoutSession')->andReturn([
+            'id' => 'btc_invoice_amt_123',
+            'status' => 'succeeded',
+            'amount' => 58.79, // Slightly less due to floating point, within tolerance
+            'currency' => 'GBP',
+            'raw' => ['amount' => 58.79, 'currency' => 'GBP'],
+        ]);
+
+        $mockCommerce = Mockery::mock(CommerceService::class);
+        // Should fulfil order as the difference is within tolerance (0.01)
+        $mockCommerce->shouldReceive('fulfillOrder')->once();
+
+        $webhookLogger = new WebhookLogger;
+        $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
+
+        $request = new \Illuminate\Http\Request;
+        $response = $controller->handle($request);
+
+        expect($response->getStatusCode())->toBe(200);
+
+        $payment = Payment::where('order_id', $this->order->id)->first();
+        expect($payment)->not->toBeNull()
+            ->and($payment->status)->toBe('succeeded');
+    });
+});
+
 afterEach(function () {
     Mockery::close();
 });
