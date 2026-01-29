@@ -48,6 +48,114 @@ beforeEach(function () {
 });
 
 describe('CouponService', function () {
+    describe('sanitiseCode() method', function () {
+        it('trims whitespace from coupon codes', function () {
+            $result = $this->service->sanitiseCode('  SAVE20  ');
+
+            expect($result)->toBe('SAVE20');
+        });
+
+        it('converts lowercase to uppercase', function () {
+            $result = $this->service->sanitiseCode('save20');
+
+            expect($result)->toBe('SAVE20');
+        });
+
+        it('handles mixed case codes', function () {
+            $result = $this->service->sanitiseCode('SaVe20');
+
+            expect($result)->toBe('SAVE20');
+        });
+
+        it('allows hyphens in codes', function () {
+            $result = $this->service->sanitiseCode('SAVE-20-NOW');
+
+            expect($result)->toBe('SAVE-20-NOW');
+        });
+
+        it('allows underscores in codes', function () {
+            $result = $this->service->sanitiseCode('SAVE_20_NOW');
+
+            expect($result)->toBe('SAVE_20_NOW');
+        });
+
+        it('rejects codes shorter than minimum length', function () {
+            $result = $this->service->sanitiseCode('AB');
+
+            expect($result)->toBeNull();
+        });
+
+        it('accepts codes at minimum length', function () {
+            $result = $this->service->sanitiseCode('ABC');
+
+            expect($result)->toBe('ABC');
+        });
+
+        it('rejects codes longer than maximum length', function () {
+            $longCode = str_repeat('A', 51);
+            $result = $this->service->sanitiseCode($longCode);
+
+            expect($result)->toBeNull();
+        });
+
+        it('accepts codes at maximum length', function () {
+            $maxCode = str_repeat('A', 50);
+            $result = $this->service->sanitiseCode($maxCode);
+
+            expect($result)->toBe($maxCode);
+        });
+
+        it('rejects codes with invalid characters', function () {
+            $invalidCodes = [
+                'SAVE@20',      // @ symbol
+                'SAVE 20',      // space (after trim)
+                'SAVE#20',      // hash
+                'SAVE!20',      // exclamation
+                'SAVE$20',      // dollar
+                'SAVE%20',      // percent
+                'SAVE&20',      // ampersand
+                'SAVE*20',      // asterisk
+                'SAVE.20',      // period
+                "SAVE'20",      // single quote
+                'SAVE"20',      // double quote
+                'SAVE;20',      // semicolon (SQL injection attempt)
+                "SAVE'--20",    // SQL injection attempt
+                'SAVE<script>', // XSS attempt
+            ];
+
+            foreach ($invalidCodes as $code) {
+                $result = $this->service->sanitiseCode($code);
+                expect($result)->toBeNull("Expected null for code: {$code}");
+            }
+        });
+
+        it('rejects empty string', function () {
+            $result = $this->service->sanitiseCode('');
+
+            expect($result)->toBeNull();
+        });
+
+        it('rejects whitespace-only string', function () {
+            $result = $this->service->sanitiseCode('   ');
+
+            expect($result)->toBeNull();
+        });
+    });
+
+    describe('isValidCodeFormat() method', function () {
+        it('returns true for valid codes', function () {
+            expect($this->service->isValidCodeFormat('SAVE20'))->toBeTrue()
+                ->and($this->service->isValidCodeFormat('save-20-now'))->toBeTrue()
+                ->and($this->service->isValidCodeFormat('CODE_123'))->toBeTrue();
+        });
+
+        it('returns false for invalid codes', function () {
+            expect($this->service->isValidCodeFormat('AB'))->toBeFalse()     // too short
+                ->and($this->service->isValidCodeFormat('SAVE@20'))->toBeFalse()  // invalid char
+                ->and($this->service->isValidCodeFormat(''))->toBeFalse();         // empty
+        });
+    });
+
     describe('findByCode() method', function () {
         it('finds coupon by code (case insensitive)', function () {
             $coupon = $this->service->findByCode('save20');
@@ -60,6 +168,20 @@ describe('CouponService', function () {
             $coupon = $this->service->findByCode('NOTREAL');
 
             expect($coupon)->toBeNull();
+        });
+
+        it('returns null for invalid code format without hitting database', function () {
+            // These should return null due to invalid format, not because they don't exist
+            expect($this->service->findByCode('AB'))->toBeNull()      // too short
+                ->and($this->service->findByCode('CODE@123'))->toBeNull(); // invalid char
+        });
+
+        it('sanitises code before lookup', function () {
+            // Should find the coupon even with whitespace and different case
+            $coupon = $this->service->findByCode('  save20  ');
+
+            expect($coupon)->not->toBeNull()
+                ->and($coupon->code)->toBe('SAVE20');
         });
     });
 
@@ -188,6 +310,63 @@ describe('CouponService', function () {
             $discount = $this->fixedCoupon->calculateDiscount(19.00);
 
             expect($discount)->toBe(0.0);
+        });
+    });
+
+    describe('validateByCode() method', function () {
+        it('validates coupon by code with sanitisation', function () {
+            $result = $this->service->validateByCode(
+                '  save20  ',  // lowercase with whitespace
+                $this->workspace,
+                $this->package
+            );
+
+            expect($result->isValid())->toBeTrue()
+                ->and($result->getCoupon()->code)->toBe('SAVE20');
+        });
+
+        it('returns invalid result for code that is too short', function () {
+            $result = $this->service->validateByCode(
+                'AB',
+                $this->workspace,
+                $this->package
+            );
+
+            expect($result->isValid())->toBeFalse()
+                ->and($result->getMessage())->toBe('Invalid coupon code format');
+        });
+
+        it('returns invalid result for code with invalid characters', function () {
+            $result = $this->service->validateByCode(
+                'CODE@123',
+                $this->workspace,
+                $this->package
+            );
+
+            expect($result->isValid())->toBeFalse()
+                ->and($result->getMessage())->toBe('Invalid coupon code format');
+        });
+
+        it('returns invalid result for SQL injection attempt', function () {
+            $result = $this->service->validateByCode(
+                "'; DROP TABLE coupons; --",
+                $this->workspace,
+                $this->package
+            );
+
+            expect($result->isValid())->toBeFalse()
+                ->and($result->getMessage())->toBe('Invalid coupon code format');
+        });
+
+        it('returns invalid result for non-existent but valid format code', function () {
+            $result = $this->service->validateByCode(
+                'NONEXISTENT',
+                $this->workspace,
+                $this->package
+            );
+
+            expect($result->isValid())->toBeFalse()
+                ->and($result->getMessage())->toBe('Invalid coupon code');
         });
     });
 

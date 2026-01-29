@@ -282,6 +282,74 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Fraud Detection Settings
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for fraud detection and prevention.
+    | Uses Stripe Radar for Stripe payments. BTCPay payments rely on
+    | blockchain confirmations for security.
+    |
+    */
+
+    'fraud' => [
+        // Enable fraud detection
+        'enabled' => env('COMMERCE_FRAUD_DETECTION', true),
+
+        // Stripe Radar integration (requires Stripe Radar subscription)
+        'stripe_radar' => [
+            'enabled' => env('COMMERCE_STRIPE_RADAR', true),
+
+            // Block payments with risk level equal or above this threshold
+            // Options: 'highest', 'elevated', 'normal' (block highest only, elevated+, or all flagged)
+            'block_threshold' => env('COMMERCE_STRIPE_RADAR_BLOCK_THRESHOLD', 'highest'),
+
+            // Review payments at this risk level (manual review required)
+            'review_threshold' => env('COMMERCE_STRIPE_RADAR_REVIEW_THRESHOLD', 'elevated'),
+
+            // Store fraud scores on orders for analysis
+            'store_scores' => true,
+        ],
+
+        // Velocity checks (rate limiting beyond checkout rate limiter)
+        'velocity' => [
+            'enabled' => env('COMMERCE_FRAUD_VELOCITY', true),
+
+            // Maximum orders per IP per hour
+            'max_orders_per_ip_hourly' => 5,
+
+            // Maximum orders per email per day
+            'max_orders_per_email_daily' => 10,
+
+            // Maximum failed payments per workspace per hour
+            'max_failed_payments_hourly' => 3,
+        ],
+
+        // Geo-anomaly detection
+        'geo' => [
+            'enabled' => env('COMMERCE_FRAUD_GEO', true),
+
+            // Flag if billing country differs from IP country
+            'flag_country_mismatch' => true,
+
+            // High-risk countries (require manual review)
+            'high_risk_countries' => [],
+        ],
+
+        // Actions on fraud detection
+        'actions' => [
+            // Log all fraud signals
+            'log' => true,
+
+            // Send notification to admin on high-risk orders
+            'notify_admin' => true,
+
+            // Automatically block orders above threshold
+            'auto_block' => true,
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Invoice PDF Settings
     |--------------------------------------------------------------------------
     |
